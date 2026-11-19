@@ -1,4 +1,4 @@
-import { UNTITLED } from '../domain/constants';
+import { MOOD_BY_ID, UNTITLED } from '../domain/constants';
 import {
   formatClockTime,
   formatShortDate,
@@ -34,6 +34,7 @@ export function EntryList({ entries, selectedDate, today, onSelect }: EntryListP
       {entries.map((entry) => {
         const relative = relativeDayLabel(entry.date, today);
         const preview = previewText(entry.content);
+        const mood = entry.mood ? MOOD_BY_ID[entry.mood] : undefined;
         return (
           <li key={entry.id}>
             <button
@@ -46,7 +47,19 @@ export function EntryList({ entries, selectedDate, today, onSelect }: EntryListP
                 <span className="entry-item-date">{formatShortDate(entry.date, today)}</span>
                 {relative && <span className="entry-item-relative">{relative}</span>}
               </span>
-              <span className="entry-item-title">{entry.title || UNTITLED}</span>
+              <span className="entry-item-title">
+                {mood && (
+                  <span
+                    className="entry-item-mood"
+                    role="img"
+                    aria-label={`心情：${mood.label}`}
+                    title={`心情：${mood.label}`}
+                  >
+                    {mood.emoji}
+                  </span>
+                )}
+                {entry.title || UNTITLED}
+              </span>
               <span className="entry-item-preview">
                 {preview || '（空白日记）'}
               </span>

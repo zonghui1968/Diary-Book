@@ -3,6 +3,16 @@
  * 扩展字段一律声明为可选，保证旧数据可直接反序列化。
  */
 
+/** 当天心情，emoji 由 UI 层映射 */
+export type MoodId =
+  | 'happy'
+  | 'calm'
+  | 'loved'
+  | 'sad'
+  | 'anxious'
+  | 'angry'
+  | 'tired';
+
 /** 一篇日记（持久化形态） */
 export interface DiaryEntry {
   id: string;
@@ -10,6 +20,8 @@ export interface DiaryEntry {
   date: string;
   title: string;
   content: string;
+  /** 心情，早期数据没有该字段 */
+  mood?: MoodId;
   /** ISO 8601 时间戳 */
   createdAt: string;
   /** ISO 8601 时间戳 */
@@ -20,6 +32,8 @@ export interface DiaryEntry {
 export interface EntryDraft {
   title: string;
   content: string;
+  /** null 表示明确清除心情；undefined 表示未提及 */
+  mood?: MoodId | null;
 }
 
 /** localStorage 信封，version 用于以后迁移 */
