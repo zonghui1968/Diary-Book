@@ -1,10 +1,26 @@
+import { sanitizeAttachments } from './attachments';
 import { isMoodId, STORAGE_KEY } from './constants';
 import { isValidDateString } from './date';
 import { sortEntries } from './factory';
 import type { DiaryEntry } from './types';
 
-/** 基础字段校验，不含 mood */
-function hasEntryFields(entry: Record<string, unknown>): boolean {
+interface StoredEntryFields {
+  id: string;
+  date: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  mood?: unknown;
+  attachments?: unknown;
+}
+
+/** 校验除 mood/附件内容之外的基础字段 */
+function hasEntryFields(value: unknown): value is StoredEntryFields {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const entry = value as Record<string, unknown>;
   return (
     typeof entry.id === 'string' &&
     entry.id.length > 0 &&
@@ -12,38 +28,35 @@ function hasEntryFields(entry: Record<string, unknown>): boolean {
     isValidDateString(entry.date) &&
     typeof entry.title === 'string' &&
     typeof entry.content === 'string' &&
+    (entry.attachments === undefined || Array.isArray(entry.attachments)) &&
     typeof entry.createdAt === 'string' &&
     typeof entry.updatedAt === 'string'
   );
 }
 
-/** mood 缺失合法；存在时必须是 MoodId */
-function isDiaryEntry(value: unknown): value is DiaryEntry {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-  const entry = value as Record<string, unknown>;
-  return hasEntryFields(entry) && (entry.mood === undefined || isMoodId(entry.mood));
-}
-
 /**
- * 读取单条记录：字段齐全但 mood 非法时剥离 mood 保留日记，
- * 其他损坏一律返回 null。
+ * 读取单条记录：字段齐全时保留；非法 mood / 坏附件只剥离对应字段，
+ * 其他损坏返回 null。
  */
 function readEntry(value: unknown): DiaryEntry | null {
-  if (isDiaryEntry(value)) {
-    return value;
-  }
-  if (typeof value !== 'object' || value === null) {
+  if (!hasEntryFields(value)) {
     return null;
   }
-  const entry = value as Record<string, unknown>;
-  if (!hasEntryFields(entry)) {
-    return null;
+  const entry: DiaryEntry = {
+    id: value.id,
+    date: value.date,
+    title: value.title,
+    content: value.content,
+    createdAt: value.createdAt,
+    updatedAt: value.updatedAt,
+  };
+  if (isMoodId(value.mood)) {
+    entry.mood = value.mood;
   }
-  const rest = { ...entry };
-  delete rest.mood;
-  return rest as unknown as DiaryEntry;
+  if (value.attachments !== undefined) {
+    entry.attachments = sanitizeAttachments(value.attachments);
+  }
+  return entry;
 }
 
 /**

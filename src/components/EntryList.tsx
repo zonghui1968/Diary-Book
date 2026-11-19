@@ -35,6 +35,7 @@ export function EntryList({ entries, selectedDate, today, onSelect }: EntryListP
         const relative = relativeDayLabel(entry.date, today);
         const preview = previewText(entry.content);
         const mood = entry.mood ? MOOD_BY_ID[entry.mood] : undefined;
+        const attachmentCount = entry.attachments?.length ?? 0;
         return (
           <li key={entry.id}>
             <button
@@ -63,6 +64,15 @@ export function EntryList({ entries, selectedDate, today, onSelect }: EntryListP
               <span className="entry-item-preview">
                 {preview || '（空白日记）'}
               </span>
+              {attachmentCount > 0 && (
+                <span
+                  className="entry-item-attachments"
+                  title={`${attachmentCount} 个附件`}
+                  aria-label={`${attachmentCount} 个附件`}
+                >
+                  📎 {attachmentCount}
+                </span>
+              )}
               <span className="entry-item-time">
                 最后编辑 {formatClockTime(entry.updatedAt)}
               </span>

@@ -79,6 +79,39 @@ describe('storage', () => {
     expect(loadEntries(storage)).toEqual([ENTRY]);
   });
 
+it('坏附件被剥离但日记本身保留', () => {
+    const storage = createMemoryStorage();
+    storage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        entries: [
+          {
+            ...ENTRY,
+            attachments: [
+              { id: 'ok', kind: 'link', title: '示例', url: 'https://example.com' },
+              { id: 'bad-url', kind: 'link', title: '坏', url: 'javascript:alert(1)' },
+              {
+                id: 'bad-image',
+                kind: 'image',
+                name: '坏图',
+                dataUrl: 'https://evil.example/x.png',
+              },
+              { id: 'ok', kind: 'link', title: '重复 id', url: 'https://example.com/dup' },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const entries = loadEntries(storage);
+    expect(entries).toHaveLength(1);
+    expect(entries[0].title).toBe(ENTRY.title);
+    expect(entries[0].attachments).toEqual([
+      { id: 'ok', kind: 'link', title: '示例', url: 'https://example.com/' },
+    ]);
+  });
+
   it('缺少 mood 的旧数据仍可读', () => {
     const storage = createMemoryStorage();
     storage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, entries: [ENTRY] }));
@@ -142,6 +175,40 @@ describe('upsertEntry', () => {
     expect(updated.createdAt).toBe(ENTRY.createdAt);
     expect(updated.updatedAt).toBe('2026-11-20T02:00:00.000Z');
     expect(updated.title).toBe('改过的标题');
+  });
+
+it('更新时保存新附件，也能清除旧附件', () => {
+    const oldAttachment = {
+      id: 'img-old',
+      kind: 'image' as const,
+      name: '旧图',
+      dataUrl: 'data:image/png;base64,AAAA',
+    };
+    const oldEntry = { ...ENTRY, attachments: [oldAttachment] };
+
+    const [cleared] = upsertEntry(
+      [oldEntry],
+      '2026-11-19',
+      { title: ENTRY.title, content: ENTRY.content },
+      '2026-11-20T02:00:00.000Z',
+    );
+    expect(cleared.attachments).toEqual([]);
+
+    const [replaced] = upsertEntry(
+      [oldEntry],
+      '2026-11-19',
+      {
+        title: ENTRY.title,
+        content: ENTRY.content,
+        attachments: [
+          { id: 'link-new', kind: 'link', title: '新链接', url: 'https://example.com' },
+        ],
+      },
+      '2026-11-20T02:00:00.000Z',
+    );
+    expect(replaced.attachments).toEqual([
+      { id: 'link-new', kind: 'link', title: '新链接', url: 'https://example.com/' },
+    ]);
   });
 
   it('新建时写入心情', () => {

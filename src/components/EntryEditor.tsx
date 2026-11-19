@@ -1,8 +1,15 @@
-import { useState, type KeyboardEvent } from 'react';
-import { MAX_CONTENT_LENGTH, MAX_TITLE_LENGTH, MOOD_BY_ID } from '../domain/constants';
+import { useRef, useState, type KeyboardEvent } from 'react';
+import {
+  MAX_CONTENT_LENGTH,
+  MAX_TITLE_LENGTH,
+  MOOD_BY_ID,
+} from '../domain/constants';
 import { formatChineseDate, relativeDayLabel, weekdayLabel } from '../domain/date';
-import type { DiaryEntry, EntryDraft } from '../domain/types';
+import type { Attachment, DiaryEntry, EntryDraft } from '../domain/types';
+import { AttachmentPanel } from './AttachmentPanel';
 import { MoodPicker } from './MoodPicker';
+
+const EMPTY_ATTACHMENTS: Attachment[] = [];
 
 interface EntryEditorProps {
   date: string;
@@ -13,20 +20,26 @@ interface EntryEditorProps {
 }
 
 export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEditorProps) {
-  const [draft, setDraft] = useState<EntryDraft>({
+  const [draft, setDraft] = useState<EntryDraft>(() => ({
     title: entry?.title ?? '',
     content: entry?.content ?? '',
     mood: entry?.mood,
-  });
+    attachments: entry?.attachments ?? EMPTY_ATTACHMENTS,
+  }));
   const [saved, setSaved] = useState(false);
+  const savedAttachmentsRef = useRef(entry?.attachments ?? EMPTY_ATTACHMENTS);
 
   const savedTitle = entry?.title ?? '';
   const savedContent = entry?.content ?? '';
   const isDirty =
     draft.title !== savedTitle ||
     draft.content !== savedContent ||
-    (draft.mood ?? undefined) !== entry?.mood;
-  const isEmpty = draft.title.trim().length === 0 && draft.content.trim().length === 0;
+    (draft.mood ?? undefined) !== entry?.mood ||
+    draft.attachments !== savedAttachmentsRef.current;
+  const isEmpty =
+    draft.title.trim().length === 0 &&
+    draft.content.trim().length === 0 &&
+    (draft.attachments?.length ?? 0) === 0;
   const relative = relativeDayLabel(date, today);
   const selectedMood = draft.mood ? MOOD_BY_ID[draft.mood] : undefined;
 
@@ -40,6 +53,7 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
       return;
     }
     onSave(draft);
+    savedAttachmentsRef.current = draft.attachments ?? EMPTY_ATTACHMENTS;
     setSaved(true);
   };
 
@@ -111,6 +125,11 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
         placeholder="今天发生了什么？此刻在想什么？"
         aria-label="日记正文"
         onChange={(event) => changeDraft({ content: event.target.value })}
+      />
+
+      <AttachmentPanel
+        attachments={draft.attachments ?? EMPTY_ATTACHMENTS}
+        onChange={(attachments) => changeDraft({ attachments })}
       />
 
       <footer className="editor-footer">
