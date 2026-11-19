@@ -14,6 +14,12 @@ export default defineConfig({
     setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     restoreMocks: true,
+    // 本机 Node 在资源紧张时并行 fork 会 spawn UNKNOWN；单进程串行更稳
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
     coverage: {
       provider: 'v8',
       include: ['src/domain/**', 'src/hooks/**'],

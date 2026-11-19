@@ -79,7 +79,7 @@ describe('storage', () => {
     expect(loadEntries(storage)).toEqual([ENTRY]);
   });
 
-  it('缺少 font 的旧数据可读，非法 font 剥离但日记保留', () => {
+  it('字体缺失可读，非法字体剥离但日记保留', () => {
     const storage = createMemoryStorage();
     storage.setItem(
       STORAGE_KEY,
@@ -97,6 +97,59 @@ describe('storage', () => {
     expect(loaded.map((entry) => entry.id)).toEqual(['legacy', 'bad-font', 'nice-font']);
     expect(loaded.map((entry) => entry.font)).toEqual([undefined, undefined, 'xing']);
     expect(loaded[1]).toMatchObject({ title: ENTRY.title, content: ENTRY.content });
+  });
+
+  it('坏附件被剥离但日记本身保留', () => {
+    const storage = createMemoryStorage();
+    storage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        entries: [
+          {
+            ...ENTRY,
+            attachments: [
+              { id: 'ok', kind: 'link', title: '示例', url: 'https://example.com' },
+              { id: 'bad-url', kind: 'link', title: '坏', url: 'javascript:alert(1)' },
+              {
+                id: 'bad-image',
+                kind: 'image',
+                name: '坏图',
+                dataUrl: 'https://evil.example/x.png',
+              },
+              { id: 'ok', kind: 'link', title: '重复 id', url: 'https://example.com/dup' },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const entries = loadEntries(storage);
+    expect(entries).toHaveLength(1);
+    expect(entries[0].title).toBe(ENTRY.title);
+    expect(entries[0].attachments).toEqual([
+      { id: 'ok', kind: 'link', title: '示例', url: 'https://example.com/' },
+    ]);
+  });
+
+  it('缺少 mood 的旧数据仍可读', () => {
+    const storage = createMemoryStorage();
+    storage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, entries: [ENTRY] }));
+    expect(loadEntries(storage)).toEqual([ENTRY]);
+  });
+
+  it('合法 mood 原样读回，非法 mood 被剥离但日记保留', () => {
+    const storage = createMemoryStorage();
+    const withMood = { ...ENTRY, id: 'mood-ok', date: '2026-11-18', mood: 'calm' };
+    const badMood = { ...ENTRY, id: 'mood-bad', date: '2026-11-17', mood: 'ecstatic' };
+    storage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ version: 1, entries: [withMood, badMood] }),
+    );
+    expect(loadEntries(storage)).toEqual([
+      withMood,
+      { ...ENTRY, id: 'mood-bad', date: '2026-11-17' },
+    ]);
   });
 
   it('写入失败时返回 false 而不是抛错', () => {
@@ -120,7 +173,12 @@ describe('storage', () => {
 
 describe('upsertEntry', () => {
   it('新建并插到最前面', () => {
-    const entries = upsertEntry([], '2026-11-19', { title: '  标题 ', content: '正文\n\n' }, '2026-11-19T01:00:00.000Z');
+    const entries = upsertEntry(
+      [],
+      '2026-11-19',
+      { title: '  标题 ', content: '正文\n\n' },
+      '2026-11-19T01:00:00.000Z',
+    );
     expect(entries).toHaveLength(1);
     expect(entries[0]).toMatchObject({
       date: '2026-11-19',
@@ -144,7 +202,7 @@ describe('upsertEntry', () => {
     expect(updated.title).toBe('改过的标题');
   });
 
-  it('新建与更新都持久化字体，草稿没有字体时清除旧字体', () => {
+  it('新建与更新都持久化字体，空字体清除旧字体', () => {
     const [created] = upsertEntry(
       [],
       '2026-11-19',
@@ -187,5 +245,73 @@ describe('upsertEntry', () => {
     } as unknown as EntryDraft;
     const [created] = upsertEntry([], '2026-11-19', draft, '2026-11-19T01:00:00.000Z');
     expect(created.font).toBeUndefined();
+  });
+
+  it('更新时保存新附件，也能清除旧附件', () => {
+    const oldAttachment = {
+      id: 'img-old',
+      kind: 'image' as const,
+      name: '旧图',
+      dataUrl: 'data:image/png;base64,AAAA',
+    };
+    const oldEntry = { ...ENTRY, attachments: [oldAttachment] };
+
+    const [cleared] = upsertEntry(
+      [oldEntry],
+      '2026-11-19',
+      { title: ENTRY.title, content: ENTRY.content },
+      '2026-11-20T02:00:00.000Z',
+    );
+    expect(cleared.attachments).toEqual([]);
+
+    const [replaced] = upsertEntry(
+      [oldEntry],
+      '2026-11-19',
+      {
+        title: ENTRY.title,
+        content: ENTRY.content,
+        attachments: [
+          { id: 'link-new', kind: 'link', title: '新链接', url: 'https://example.com' },
+        ],
+      },
+      '2026-11-20T02:00:00.000Z',
+    );
+    expect(replaced.attachments).toEqual([
+      { id: 'link-new', kind: 'link', title: '新链接', url: 'https://example.com/' },
+    ]);
+  });
+
+  it('新建时写入心情', () => {
+    const [created] = upsertEntry(
+      [],
+      '2026-11-19',
+      { title: '开心的一天', content: '正文', mood: 'happy' },
+      '2026-11-19T01:00:00.000Z',
+    );
+    expect(created.mood).toBe('happy');
+  });
+
+  it('更新时保留、覆盖或清除心情', () => {
+    const withMood: DiaryEntry = { ...ENTRY, mood: 'calm' };
+    const now = '2026-11-20T02:00:00.000Z';
+
+    const [kept] = upsertEntry([withMood], ENTRY.date, { title: '改', content: '改' }, now);
+    expect(kept.mood).toBe('calm');
+
+    const [replaced] = upsertEntry(
+      [withMood],
+      ENTRY.date,
+      { title: '改', content: '改', mood: 'sad' },
+      now,
+    );
+    expect(replaced.mood).toBe('sad');
+
+    const [cleared] = upsertEntry(
+      [withMood],
+      ENTRY.date,
+      { title: '改', content: '改', mood: null },
+      now,
+    );
+    expect(cleared).not.toHaveProperty('mood');
   });
 });

@@ -3,8 +3,50 @@
  * 扩展字段一律声明为可选，保证旧数据可直接反序列化。
  */
 
+/** 当天心情，emoji 由 UI 层映射 */
+export type MoodId =
+  | 'happy'
+  | 'calm'
+  | 'loved'
+  | 'sad'
+  | 'anxious'
+  | 'angry'
+  | 'tired';
+
 /** 正文字体：楷书 / 行书 / 草书 */
 export type FontId = 'kai' | 'xing' | 'cao';
+
+/** 本地图片附件，dataUrl 为 data:image/… 形式 */
+export interface ImageAttachment {
+  id: string;
+  kind: 'image';
+  name: string;
+  dataUrl: string;
+}
+
+/** 网络链接附件，url 只允许 http/https */
+export interface LinkAttachment {
+  id: string;
+  kind: 'link';
+  title: string;
+  url: string;
+}
+
+export interface ChartPoint {
+  label: string;
+  value: number;
+}
+
+/** 简易图表附件，points 至少一项 */
+export interface ChartAttachment {
+  id: string;
+  kind: 'chart';
+  chartType: 'bar' | 'line';
+  title: string;
+  points: ChartPoint[];
+}
+
+export type Attachment = ImageAttachment | LinkAttachment | ChartAttachment;
 
 /** 一篇日记（持久化形态） */
 export interface DiaryEntry {
@@ -15,6 +57,10 @@ export interface DiaryEntry {
   content: string;
   /** 正文字体；缺省表示默认字体 */
   font?: FontId;
+  /** 心情，早期数据没有该字段 */
+  mood?: MoodId;
+  /** 附件，早期数据没有该字段 */
+  attachments?: Attachment[];
   /** ISO 8601 时间戳 */
   createdAt: string;
   /** ISO 8601 时间戳 */
@@ -27,6 +73,9 @@ export interface EntryDraft {
   content: string;
   /** 正文字体；null / undefined 表示默认字体 */
   font?: FontId | null;
+  /** null 表示明确清除心情；undefined 表示未提及 */
+  mood?: MoodId | null;
+  attachments?: Attachment[];
 }
 
 /** localStorage 信封，version 用于以后迁移 */

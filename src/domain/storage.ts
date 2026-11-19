@@ -1,9 +1,23 @@
-import { isFontId, STORAGE_KEY } from './constants';
+import { sanitizeAttachments } from './attachments';
+import { isFontId, isMoodId, STORAGE_KEY } from './constants';
 import { isValidDateString } from './date';
 import { sortEntries } from './factory';
 import type { DiaryEntry } from './types';
 
-function isDiaryEntry(value: unknown): value is DiaryEntry {
+interface StoredEntryFields {
+  id: string;
+  date: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  font?: unknown;
+  mood?: unknown;
+  attachments?: unknown;
+}
+
+/** 校验基础字段；字体/心情/附件内容单独清洗，避免坏字段丢整条日记 */
+function hasEntryFields(value: unknown): value is StoredEntryFields {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
@@ -15,10 +29,38 @@ function isDiaryEntry(value: unknown): value is DiaryEntry {
     isValidDateString(entry.date) &&
     typeof entry.title === 'string' &&
     typeof entry.content === 'string' &&
+    (entry.attachments === undefined || Array.isArray(entry.attachments)) &&
     typeof entry.createdAt === 'string' &&
-    typeof entry.updatedAt === 'string' &&
-    (entry.font === undefined || isFontId(entry.font))
+    typeof entry.updatedAt === 'string'
   );
+}
+
+/**
+ * 读取单条记录：字段齐全时保留；非法字体 / 心情 / 坏附件只剥离对应字段，
+ * 其他损坏返回 null。
+ */
+function readEntry(value: unknown): DiaryEntry | null {
+  if (!hasEntryFields(value)) {
+    return null;
+  }
+  const entry: DiaryEntry = {
+    id: value.id,
+    date: value.date,
+    title: value.title,
+    content: value.content,
+    createdAt: value.createdAt,
+    updatedAt: value.updatedAt,
+  };
+  if (isMoodId(value.mood)) {
+    entry.mood = value.mood;
+  }
+  if (isFontId(value.font)) {
+    entry.font = value.font;
+  }
+  if (value.attachments !== undefined) {
+    entry.attachments = sanitizeAttachments(value.attachments);
+  }
+  return entry;
 }
 
 /**
@@ -49,19 +91,12 @@ export function loadEntries(storage: Storage): DiaryEntry[] {
   const seenDates = new Set<string>();
   const entries: DiaryEntry[] = [];
   for (const item of list) {
-    if (typeof item !== 'object' || item === null) {
+    const entry = readEntry(item);
+    if (!entry || seenDates.has(entry.date)) {
       continue;
     }
-    // 非法字体只剥离字体字段，不连整条日记一起丢弃
-    const candidate: Record<string, unknown> = { ...item };
-    if (candidate.font !== undefined && !isFontId(candidate.font)) {
-      delete candidate.font;
-    }
-    if (!isDiaryEntry(candidate) || seenDates.has(candidate.date)) {
-      continue;
-    }
-    seenDates.add(candidate.date);
-    entries.push(candidate);
+    seenDates.add(entry.date);
+    entries.push(entry);
   }
   return sortEntries(entries);
 }

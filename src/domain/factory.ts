@@ -1,4 +1,5 @@
-import { isFontId } from './constants';
+import { sanitizeAttachments } from './attachments';
+import { isFontId, isMoodId } from './constants';
 import type { DiaryEntry, EntryDraft } from './types';
 
 /** 生成实体 id；优先用 crypto.randomUUID，降级为时间戳 + 随机串 */
@@ -9,21 +10,25 @@ export function makeId(): string {
   return `e_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-/** 规整后的草稿：字体已收敛为合法 id 或 undefined，可直接写入实体 */
-export type NormalizedDraft = Pick<DiaryEntry, 'title' | 'content' | 'font'>;
-
-/** 规整草稿：标题去首尾空白，正文去掉行尾空白但保留内部换行；非法字体视为未选 */
-export function normalizeDraft(draft: EntryDraft): NormalizedDraft {
+/**
+ * 规整草稿：标题去首尾空白，正文去掉行尾空白但保留内部换行。
+ * 非法字体/心情视为未选；附件统一清洗为数组，便于更新时清空旧附件。
+ */
+export function normalizeDraft(draft: EntryDraft): EntryDraft {
   return {
     title: draft.title.trim(),
     content: draft.content.replace(/\s+$/, ''),
     font: isFontId(draft.font) ? draft.font : undefined,
+    mood: isMoodId(draft.mood) ? draft.mood : undefined,
+    attachments: sanitizeAttachments(draft.attachments),
   };
 }
 
 /**
- * 同一天只保留一篇：已存在则更新标题/正文并刷新 updatedAt，
+ * 同一天只保留一篇：已存在则更新标题/正文/附件并刷新 updatedAt，
  * 不存在则新建并插入到列表最前面。纯函数，不修改入参。
+ * 草稿不含 mood 时更新保留原心情；含 null 时删除该字段。
+ * 字体按草稿为准，未选字体则清除旧字体。
  */
 export function upsertEntry(
   entries: DiaryEntry[],
@@ -35,20 +40,48 @@ export function upsertEntry(
   const existing = entries.find((entry) => entry.date === date);
 
   if (existing) {
-    return entries.map((entry) =>
-      entry.date === date
-        ? { ...entry, ...normalized, updatedAt: nowISO }
-        : entry,
-    );
+    return entries.map((entry) => {
+      if (entry.date !== date) {
+        return entry;
+      }
+      const next: DiaryEntry = {
+        ...entry,
+        title: normalized.title,
+        content: normalized.content,
+        attachments: normalized.attachments,
+        updatedAt: nowISO,
+      };
+      if (normalized.font) {
+        next.font = normalized.font;
+      } else {
+        delete next.font;
+      }
+      if ('mood' in draft) {
+        if (normalized.mood) {
+          next.mood = normalized.mood;
+        } else {
+          delete next.mood;
+        }
+      }
+      return next;
+    });
   }
 
   const created: DiaryEntry = {
     id: makeId(),
     date,
-    ...normalized,
+    title: normalized.title,
+    content: normalized.content,
+    attachments: normalized.attachments,
     createdAt: nowISO,
     updatedAt: nowISO,
   };
+  if (normalized.font) {
+    created.font = normalized.font;
+  }
+  if (normalized.mood) {
+    created.mood = normalized.mood;
+  }
   return [created, ...entries];
 }
 

@@ -1,4 +1,4 @@
-import { FONT_BY_ID, UNTITLED } from '../domain/constants';
+import { FONT_BY_ID, MOOD_BY_ID, UNTITLED } from '../domain/constants';
 import {
   formatClockTime,
   formatShortDate,
@@ -35,6 +35,8 @@ export function EntryList({ entries, selectedDate, today, onSelect }: EntryListP
         const relative = relativeDayLabel(entry.date, today);
         const preview = previewText(entry.content);
         const fontLabel = entry.font ? FONT_BY_ID[entry.font].label : undefined;
+        const mood = entry.mood ? MOOD_BY_ID[entry.mood] : undefined;
+        const attachmentCount = entry.attachments?.length ?? 0;
         return (
           <li key={entry.id}>
             <button
@@ -55,10 +57,31 @@ export function EntryList({ entries, selectedDate, today, onSelect }: EntryListP
                   )}
                 </span>
               </span>
-              <span className="entry-item-title">{entry.title || UNTITLED}</span>
+              <span className="entry-item-title">
+                {mood && (
+                  <span
+                    className="entry-item-mood"
+                    role="img"
+                    aria-label={`心情：${mood.label}`}
+                    title={`心情：${mood.label}`}
+                  >
+                    {mood.emoji}
+                  </span>
+                )}
+                {entry.title || UNTITLED}
+              </span>
               <span className="entry-item-preview">
                 {preview || '（空白日记）'}
               </span>
+              {attachmentCount > 0 && (
+                <span
+                  className="entry-item-attachments"
+                  title={`${attachmentCount} 个附件`}
+                  aria-label={`${attachmentCount} 个附件`}
+                >
+                  📎 {attachmentCount}
+                </span>
+              )}
               <span className="entry-item-time">
                 最后编辑 {formatClockTime(entry.updatedAt)}
               </span>

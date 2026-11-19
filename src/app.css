@@ -306,6 +306,12 @@ textarea {
   color: var(--muted);
 }
 
+.entry-item-mood {
+  margin-right: 6px;
+  font-size: 14px;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+}
+
 .entry-empty {
   margin: 6px 10px;
   padding: 26px 16px;
@@ -362,6 +368,13 @@ textarea {
   letter-spacing: 0.08em;
 }
 
+.editor-mood {
+  margin-left: 8px;
+  font-size: 15px;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  vertical-align: -1px;
+}
+
 .editor-head h2 {
   margin: 0;
   font-size: clamp(22px, 2.4vw, 30px);
@@ -412,7 +425,8 @@ textarea {
   color: var(--muted);
 }
 
-.font-picker {
+.font-picker,
+.mood-picker {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -459,6 +473,52 @@ textarea {
   white-space: nowrap;
 }
 
+.mood-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-soft);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  line-height: 1.5;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.mood-option:hover {
+  border-color: var(--line-strong);
+  background: var(--paper);
+}
+
+.mood-option.is-active {
+  border-color: #ecc9b0;
+  background: linear-gradient(150deg, #fdf1e7 0%, #f9e6d7 100%);
+  color: var(--accent-deep);
+}
+
+.mood-option--clear {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.mood-option:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.mood-emoji {
+  font-size: 15px;
+  line-height: 1;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+}
+
 .editor-content {
   flex: 1;
   width: 100%;
@@ -498,6 +558,192 @@ textarea {
 
 .save-state.is-saved {
   color: #5d7a4f;
+}
+
+/* ------------------------------------------------------------- attachments */
+
+.attachment-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--line-strong);
+}
+
+.attachment-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.attachment-count {
+  margin-left: auto;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.attachment-error {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fbe9e2;
+  color: var(--accent-deep);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.attachment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 14px;
+  background: var(--paper-soft);
+}
+
+.attachment-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.attachment-field input,
+.attachment-field select,
+.attachment-field textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--paper);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+}
+
+.attachment-field textarea {
+  resize: vertical;
+  line-height: 1.7;
+}
+
+.attachment-field input:focus,
+.attachment-field select:focus,
+.attachment-field textarea:focus {
+  border-color: var(--accent);
+}
+
+.attachment-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.attachment-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.attachment-card {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--paper-soft);
+}
+
+.attachment-thumb {
+  display: block;
+  max-width: 160px;
+  max-height: 120px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.attachment-card-body {
+  flex: 1 1 180px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--font-ui);
+}
+
+.attachment-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+.attachment-card-note {
+  font-size: 11px;
+  color: var(--muted);
+  word-break: break-all;
+}
+
+.attachment-link {
+  font-size: 13px;
+  color: var(--accent-deep);
+  word-break: break-word;
+  text-decoration-color: rgba(143, 63, 30, 0.4);
+  text-underline-offset: 2px;
+}
+
+.attachment-link:hover {
+  color: var(--accent);
+}
+
+.attachment-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.attachment-chart {
+  width: 100%;
+  max-width: 320px;
+  min-width: 0;
+}
+
+.attachment-chart-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.attachment-remove {
+  margin-left: auto;
+}
+
+.entry-item-attachments {
+  align-self: flex-start;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-family: var(--font-ui);
+  font-size: 10.5px;
 }
 
 /* --------------------------------------------------------------- buttons */
@@ -615,6 +861,24 @@ textarea {
 
   .editor-pane {
     padding: 18px 16px;
+  }
+
+  .attachment-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .attachment-thumb {
+    max-width: 100%;
+  }
+
+  .attachment-chart {
+    max-width: 100%;
+  }
+
+  .attachment-remove {
+    align-self: flex-start;
+    margin-left: 0;
   }
 
   .app-footer {
