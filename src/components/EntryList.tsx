@@ -1,4 +1,4 @@
-import { MOOD_BY_ID, UNTITLED } from '../domain/constants';
+import { FONT_BY_ID, MOOD_BY_ID, UNTITLED } from '../domain/constants';
 import {
   formatClockTime,
   formatShortDate,
@@ -34,6 +34,7 @@ export function EntryList({ entries, selectedDate, today, onSelect }: EntryListP
       {entries.map((entry) => {
         const relative = relativeDayLabel(entry.date, today);
         const preview = previewText(entry.content);
+        const fontLabel = entry.font ? FONT_BY_ID[entry.font].label : undefined;
         const mood = entry.mood ? MOOD_BY_ID[entry.mood] : undefined;
         const attachmentCount = entry.attachments?.length ?? 0;
         return (
@@ -46,7 +47,15 @@ export function EntryList({ entries, selectedDate, today, onSelect }: EntryListP
             >
               <span className="entry-item-top">
                 <span className="entry-item-date">{formatShortDate(entry.date, today)}</span>
-                {relative && <span className="entry-item-relative">{relative}</span>}
+                <span className="entry-item-marks">
+                  {relative && <span className="entry-item-relative">{relative}</span>}
+                  {fontLabel && (
+                    <span className="entry-item-font" title={`字体：${fontLabel}`}>
+                      {/* 楷书/行书/草书 → 楷/行/草 */}
+                      {fontLabel.slice(0, 1)}
+                    </span>
+                  )}
+                </span>
               </span>
               <span className="entry-item-title">
                 {mood && (

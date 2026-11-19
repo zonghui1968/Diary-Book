@@ -264,6 +264,23 @@ textarea {
   font-size: 10.5px;
 }
 
+.entry-item-marks {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.entry-item-font {
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-soft);
+  color: var(--ink-soft);
+  font-size: 10.5px;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+}
+
 .entry-item-title {
   font-size: 15.5px;
   font-weight: 600;
@@ -408,11 +425,52 @@ textarea {
   color: var(--muted);
 }
 
+.font-picker,
 .mood-picker {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.font-option {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.font-option:hover {
+  border-color: var(--line-strong);
+  background: var(--paper-soft);
+  transform: translateY(-1px);
+}
+
+.font-option.is-active {
+  border-color: #ecc9b0;
+  background: linear-gradient(150deg, #fdf1e7 0%, #f9e6d7 100%);
+  color: var(--accent-deep);
+}
+
+.font-option-label {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.font-option-sample {
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .mood-option {
@@ -710,6 +768,7 @@ textarea {
 }
 
 .button:focus-visible,
+.font-option:focus-visible,
 .entry-item:focus-visible,
 .date-jump input:focus-visible {
   outline: 2px solid var(--accent);

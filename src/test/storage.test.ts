@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { STORAGE_KEY } from '../domain/constants';
 import { upsertEntry } from '../domain/factory';
 import { loadEntries, saveEntries } from '../domain/storage';
-import type { DiaryEntry } from '../domain/types';
+import type { DiaryEntry, EntryDraft } from '../domain/types';
 
 function createMemoryStorage(): Storage {
   const values = new Map<string, string>();
@@ -79,7 +79,27 @@ describe('storage', () => {
     expect(loadEntries(storage)).toEqual([ENTRY]);
   });
 
-it('坏附件被剥离但日记本身保留', () => {
+  it('字体缺失可读，非法字体剥离但日记保留', () => {
+    const storage = createMemoryStorage();
+    storage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        entries: [
+          { ...ENTRY, id: 'legacy', date: '2026-11-18' },
+          { ...ENTRY, id: 'bad-font', date: '2026-11-17', font: 'song' },
+          { ...ENTRY, id: 'nice-font', date: '2026-11-16', font: 'xing' },
+        ],
+      }),
+    );
+
+    const loaded = loadEntries(storage);
+    expect(loaded.map((entry) => entry.id)).toEqual(['legacy', 'bad-font', 'nice-font']);
+    expect(loaded.map((entry) => entry.font)).toEqual([undefined, undefined, 'xing']);
+    expect(loaded[1]).toMatchObject({ title: ENTRY.title, content: ENTRY.content });
+  });
+
+  it('坏附件被剥离但日记本身保留', () => {
     const storage = createMemoryStorage();
     storage.setItem(
       STORAGE_KEY,
@@ -153,7 +173,12 @@ it('坏附件被剥离但日记本身保留', () => {
 
 describe('upsertEntry', () => {
   it('新建并插到最前面', () => {
-    const entries = upsertEntry([], '2026-11-19', { title: '  标题 ', content: '正文\n\n' }, '2026-11-19T01:00:00.000Z');
+    const entries = upsertEntry(
+      [],
+      '2026-11-19',
+      { title: '  标题 ', content: '正文\n\n' },
+      '2026-11-19T01:00:00.000Z',
+    );
     expect(entries).toHaveLength(1);
     expect(entries[0]).toMatchObject({
       date: '2026-11-19',
@@ -177,7 +202,52 @@ describe('upsertEntry', () => {
     expect(updated.title).toBe('改过的标题');
   });
 
-it('更新时保存新附件，也能清除旧附件', () => {
+  it('新建与更新都持久化字体，空字体清除旧字体', () => {
+    const [created] = upsertEntry(
+      [],
+      '2026-11-19',
+      { title: '标题', content: '正文', font: 'xing' },
+      '2026-11-19T01:00:00.000Z',
+    );
+    expect(created.font).toBe('xing');
+
+    const [kept] = upsertEntry(
+      [created],
+      '2026-11-19',
+      { title: '标题', content: '正文', font: 'cao' },
+      '2026-11-20T01:00:00.000Z',
+    );
+    expect(kept.font).toBe('cao');
+    expect(kept.id).toBe(created.id);
+
+    const [cleared] = upsertEntry(
+      [kept],
+      '2026-11-19',
+      { title: '标题', content: '正文', font: null },
+      '2026-11-21T01:00:00.000Z',
+    );
+    expect(cleared.font).toBeUndefined();
+
+    const [omitted] = upsertEntry(
+      [kept],
+      '2026-11-19',
+      { title: '标题', content: '正文' },
+      '2026-11-22T01:00:00.000Z',
+    );
+    expect(omitted.font).toBeUndefined();
+  });
+
+  it('非法字体在写入时被规整为未选', () => {
+    const draft = {
+      title: '标题',
+      content: '正文',
+      font: 'song',
+    } as unknown as EntryDraft;
+    const [created] = upsertEntry([], '2026-11-19', draft, '2026-11-19T01:00:00.000Z');
+    expect(created.font).toBeUndefined();
+  });
+
+  it('更新时保存新附件，也能清除旧附件', () => {
     const oldAttachment = {
       id: 'img-old',
       kind: 'image' as const,

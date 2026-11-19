@@ -13,6 +13,9 @@ export type MoodId =
   | 'angry'
   | 'tired';
 
+/** 正文字体：楷书 / 行书 / 草书 */
+export type FontId = 'kai' | 'xing' | 'cao';
+
 /** 本地图片附件，dataUrl 为 data:image/… 形式 */
 export interface ImageAttachment {
   id: string;
@@ -52,6 +55,8 @@ export interface DiaryEntry {
   date: string;
   title: string;
   content: string;
+  /** 正文字体；缺省表示默认字体 */
+  font?: FontId;
   /** 心情，早期数据没有该字段 */
   mood?: MoodId;
   /** 附件，早期数据没有该字段 */
@@ -66,6 +71,8 @@ export interface DiaryEntry {
 export interface EntryDraft {
   title: string;
   content: string;
+  /** 正文字体；null / undefined 表示默认字体 */
+  font?: FontId | null;
   /** null 表示明确清除心情；undefined 表示未提及 */
   mood?: MoodId | null;
   attachments?: Attachment[];

@@ -1,5 +1,5 @@
 import { sanitizeAttachments } from './attachments';
-import { isMoodId, STORAGE_KEY } from './constants';
+import { isFontId, isMoodId, STORAGE_KEY } from './constants';
 import { isValidDateString } from './date';
 import { sortEntries } from './factory';
 import type { DiaryEntry } from './types';
@@ -11,11 +11,12 @@ interface StoredEntryFields {
   content: string;
   createdAt: string;
   updatedAt: string;
+  font?: unknown;
   mood?: unknown;
   attachments?: unknown;
 }
 
-/** 校验除 mood/附件内容之外的基础字段 */
+/** 校验基础字段；字体/心情/附件内容单独清洗，避免坏字段丢整条日记 */
 function hasEntryFields(value: unknown): value is StoredEntryFields {
   if (typeof value !== 'object' || value === null) {
     return false;
@@ -35,7 +36,7 @@ function hasEntryFields(value: unknown): value is StoredEntryFields {
 }
 
 /**
- * 读取单条记录：字段齐全时保留；非法 mood / 坏附件只剥离对应字段，
+ * 读取单条记录：字段齐全时保留；非法字体 / 心情 / 坏附件只剥离对应字段，
  * 其他损坏返回 null。
  */
 function readEntry(value: unknown): DiaryEntry | null {
@@ -52,6 +53,9 @@ function readEntry(value: unknown): DiaryEntry | null {
   };
   if (isMoodId(value.mood)) {
     entry.mood = value.mood;
+  }
+  if (isFontId(value.font)) {
+    entry.font = value.font;
   }
   if (value.attachments !== undefined) {
     entry.attachments = sanitizeAttachments(value.attachments);

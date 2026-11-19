@@ -1,8 +1,9 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import App from '../App';
 import { STORAGE_KEY } from '../domain/constants';
+import { todayString } from '../domain/date';
 import type { EntriesEnvelope } from '../domain/types';
 
 function readStoredEntries(): EntriesEnvelope['entries'] {
@@ -92,5 +93,31 @@ describe('App', () => {
     expect(confirmSpy).toHaveBeenCalled();
     expect(readStoredEntries()).toHaveLength(0);
     expect(screen.getByText(/日记本还是空的/)).toBeInTheDocument();
+  });
+
+  it('选行书写作后保存字体，切换日期再切回来重新应用', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: '行书' }));
+    await user.type(screen.getByLabelText('日记正文'), '落笔自带行书的连势。');
+    await user.click(screen.getByRole('button', { name: '保存' }));
+
+    expect(readStoredEntries()[0]).toMatchObject({
+      font: 'xing',
+      content: '落笔自带行书的连势。',
+    });
+    expect(screen.getByLabelText('日记正文').style.fontFamily).toContain('Ma Shan Zheng');
+
+    const dateInput = screen.getByLabelText('翻到某一天');
+    fireEvent.change(dateInput, { target: { value: '2001-02-03' } });
+    expect(screen.getByLabelText('日记正文')).toHaveValue('');
+
+    fireEvent.change(dateInput, { target: { value: todayString() } });
+    const textarea = screen.getByLabelText('日记正文');
+    expect(textarea).toHaveValue('落笔自带行书的连势。');
+    expect(textarea.style.fontFamily).toContain('Ma Shan Zheng');
+    expect(screen.getByRole('button', { name: '行书' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTitle('字体：行书')).toHaveTextContent('行');
   });
 });

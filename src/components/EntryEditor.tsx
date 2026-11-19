@@ -1,9 +1,11 @@
 import { useRef, useState, type KeyboardEvent } from 'react';
 import {
+  fontFamilyOf,
   MAX_CONTENT_LENGTH,
   MAX_TITLE_LENGTH,
   MOOD_BY_ID,
 } from '../domain/constants';
+import { FontPicker } from './FontPicker';
 import { formatChineseDate, relativeDayLabel, weekdayLabel } from '../domain/date';
 import type { Attachment, DiaryEntry, EntryDraft } from '../domain/types';
 import { AttachmentPanel } from './AttachmentPanel';
@@ -23,6 +25,7 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
   const [draft, setDraft] = useState<EntryDraft>(() => ({
     title: entry?.title ?? '',
     content: entry?.content ?? '',
+    font: entry?.font,
     mood: entry?.mood,
     attachments: entry?.attachments ?? EMPTY_ATTACHMENTS,
   }));
@@ -34,6 +37,7 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
   const isDirty =
     draft.title !== savedTitle ||
     draft.content !== savedContent ||
+    (draft.font ?? undefined) !== entry?.font ||
     (draft.mood ?? undefined) !== entry?.mood ||
     draft.attachments !== savedAttachmentsRef.current;
   const isEmpty =
@@ -111,6 +115,10 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
       />
 
       <div className="editor-toolbar" role="toolbar" aria-label="编辑工具">
+        <FontPicker
+          value={draft.font ?? undefined}
+          onChange={(font) => changeDraft({ font })}
+        />
         <span className="editor-hint">正文会自动保存在本机浏览器中</span>
         <MoodPicker
           value={draft.mood ?? undefined}
@@ -124,6 +132,10 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
         maxLength={MAX_CONTENT_LENGTH}
         placeholder="今天发生了什么？此刻在想什么？"
         aria-label="日记正文"
+        style={{
+          fontFamily: fontFamilyOf(draft.font ?? undefined),
+          ...(draft.font === 'cao' ? { lineHeight: 2.4 } : {}),
+        }}
         onChange={(event) => changeDraft({ content: event.target.value })}
       />
 
