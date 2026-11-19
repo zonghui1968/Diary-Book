@@ -1,4 +1,4 @@
-import { FONT_OPTIONS, fontFamilyOf } from '../domain/constants';
+import { FONT_OPTIONS, fontFamilyOf, isFontId } from '../domain/constants';
 import type { FontId } from '../domain/types';
 
 interface FontPickerProps {
@@ -6,46 +6,33 @@ interface FontPickerProps {
   onChange: (font: FontId | undefined) => void;
 }
 
-/** 正文字体选择：默认 + 楷书/行书/草书，按钮示例用真实字体渲染 */
+/** 正文字体选择：紧凑下拉，右侧用真实字体即时预览当前选择 */
 export function FontPicker({ value, onChange }: FontPickerProps) {
   return (
-    <div className="font-picker" role="group" aria-label="正文字体">
-      <button
-        type="button"
-        className={`font-option${value === undefined ? ' is-active' : ''}`}
-        aria-pressed={value === undefined}
-        onClick={() => onChange(undefined)}
+    <label className="font-picker font-select">
+      <span className="font-select-label">字体</span>
+      <select
+        aria-label="正文字体"
+        value={value ?? ''}
+        onChange={(event) => {
+          const next = event.target.value;
+          onChange(isFontId(next) ? next : undefined);
+        }}
       >
-        <span className="font-option-label">默认</span>
-        <span
-          className="font-option-sample"
-          style={{ fontFamily: fontFamilyOf(undefined) }}
-          aria-hidden="true"
-        >
-          永和九年
-        </span>
-      </button>
-      {FONT_OPTIONS.map((option) => {
-        const active = value === option.id;
-        return (
-          <button
-            key={option.id}
-            type="button"
-            className={`font-option${active ? ' is-active' : ''}`}
-            aria-pressed={active}
-            onClick={() => onChange(option.id)}
-          >
-            <span className="font-option-label">{option.label}</span>
-            <span
-              className="font-option-sample"
-              style={{ fontFamily: option.cssFamily }}
-              aria-hidden="true"
-            >
-              {option.sample}
-            </span>
-          </button>
-        );
-      })}
-    </div>
+        <option value="">默认</option>
+        {FONT_OPTIONS.map((option) => (
+          <option key={option.id} value={option.id}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <span
+        className="font-select-preview"
+        style={{ fontFamily: fontFamilyOf(value) }}
+        aria-hidden="true"
+      >
+        永和九年
+      </span>
+    </label>
   );
 }
