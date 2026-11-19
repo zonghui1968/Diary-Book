@@ -79,6 +79,26 @@ describe('storage', () => {
     expect(loadEntries(storage)).toEqual([ENTRY]);
   });
 
+  it('缺少 mood 的旧数据仍可读', () => {
+    const storage = createMemoryStorage();
+    storage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, entries: [ENTRY] }));
+    expect(loadEntries(storage)).toEqual([ENTRY]);
+  });
+
+  it('合法 mood 原样读回，非法 mood 被剥离但日记保留', () => {
+    const storage = createMemoryStorage();
+    const withMood = { ...ENTRY, id: 'mood-ok', date: '2026-11-18', mood: 'calm' };
+    const badMood = { ...ENTRY, id: 'mood-bad', date: '2026-11-17', mood: 'ecstatic' };
+    storage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ version: 1, entries: [withMood, badMood] }),
+    );
+    expect(loadEntries(storage)).toEqual([
+      withMood,
+      { ...ENTRY, id: 'mood-bad', date: '2026-11-17' },
+    ]);
+  });
+
   it('写入失败时返回 false 而不是抛错', () => {
     const storage: Storage = {
       length: 0,
@@ -122,5 +142,39 @@ describe('upsertEntry', () => {
     expect(updated.createdAt).toBe(ENTRY.createdAt);
     expect(updated.updatedAt).toBe('2026-11-20T02:00:00.000Z');
     expect(updated.title).toBe('改过的标题');
+  });
+
+  it('新建时写入心情', () => {
+    const [created] = upsertEntry(
+      [],
+      '2026-11-19',
+      { title: '开心的一天', content: '正文', mood: 'happy' },
+      '2026-11-19T01:00:00.000Z',
+    );
+    expect(created.mood).toBe('happy');
+  });
+
+  it('更新时保留、覆盖或清除心情', () => {
+    const withMood: DiaryEntry = { ...ENTRY, mood: 'calm' };
+    const now = '2026-11-20T02:00:00.000Z';
+
+    const [kept] = upsertEntry([withMood], ENTRY.date, { title: '改', content: '改' }, now);
+    expect(kept.mood).toBe('calm');
+
+    const [replaced] = upsertEntry(
+      [withMood],
+      ENTRY.date,
+      { title: '改', content: '改', mood: 'sad' },
+      now,
+    );
+    expect(replaced.mood).toBe('sad');
+
+    const [cleared] = upsertEntry(
+      [withMood],
+      ENTRY.date,
+      { title: '改', content: '改', mood: null },
+      now,
+    );
+    expect(cleared).not.toHaveProperty('mood');
   });
 });

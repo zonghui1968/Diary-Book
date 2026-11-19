@@ -1,13 +1,10 @@
-import { STORAGE_KEY } from './constants';
+import { isMoodId, STORAGE_KEY } from './constants';
 import { isValidDateString } from './date';
 import { sortEntries } from './factory';
 import type { DiaryEntry } from './types';
 
-function isDiaryEntry(value: unknown): value is DiaryEntry {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-  const entry = value as Record<string, unknown>;
+/** 基础字段校验，不含 mood */
+function hasEntryFields(entry: Record<string, unknown>): boolean {
   return (
     typeof entry.id === 'string' &&
     entry.id.length > 0 &&
@@ -18,6 +15,35 @@ function isDiaryEntry(value: unknown): value is DiaryEntry {
     typeof entry.createdAt === 'string' &&
     typeof entry.updatedAt === 'string'
   );
+}
+
+/** mood 缺失合法；存在时必须是 MoodId */
+function isDiaryEntry(value: unknown): value is DiaryEntry {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const entry = value as Record<string, unknown>;
+  return hasEntryFields(entry) && (entry.mood === undefined || isMoodId(entry.mood));
+}
+
+/**
+ * 读取单条记录：字段齐全但 mood 非法时剥离 mood 保留日记，
+ * 其他损坏一律返回 null。
+ */
+function readEntry(value: unknown): DiaryEntry | null {
+  if (isDiaryEntry(value)) {
+    return value;
+  }
+  if (typeof value !== 'object' || value === null) {
+    return null;
+  }
+  const entry = value as Record<string, unknown>;
+  if (!hasEntryFields(entry)) {
+    return null;
+  }
+  const rest = { ...entry };
+  delete rest.mood;
+  return rest as unknown as DiaryEntry;
 }
 
 /**
@@ -48,11 +74,12 @@ export function loadEntries(storage: Storage): DiaryEntry[] {
   const seenDates = new Set<string>();
   const entries: DiaryEntry[] = [];
   for (const item of list) {
-    if (!isDiaryEntry(item) || seenDates.has(item.date)) {
+    const entry = readEntry(item);
+    if (!entry || seenDates.has(entry.date)) {
       continue;
     }
-    seenDates.add(item.date);
-    entries.push(item);
+    seenDates.add(entry.date);
+    entries.push(entry);
   }
   return sortEntries(entries);
 }

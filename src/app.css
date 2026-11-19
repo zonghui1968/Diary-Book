@@ -289,6 +289,12 @@ textarea {
   color: var(--muted);
 }
 
+.entry-item-mood {
+  margin-right: 6px;
+  font-size: 14px;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+}
+
 .entry-empty {
   margin: 6px 10px;
   padding: 26px 16px;
@@ -345,6 +351,13 @@ textarea {
   letter-spacing: 0.08em;
 }
 
+.editor-mood {
+  margin-left: 8px;
+  font-size: 15px;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  vertical-align: -1px;
+}
+
 .editor-head h2 {
   margin: 0;
   font-size: clamp(22px, 2.4vw, 30px);
@@ -393,6 +406,59 @@ textarea {
   font-family: var(--font-ui);
   font-size: 11.5px;
   color: var(--muted);
+}
+
+.mood-picker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mood-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-soft);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  line-height: 1.5;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.mood-option:hover {
+  border-color: var(--line-strong);
+  background: var(--paper);
+}
+
+.mood-option.is-active {
+  border-color: #ecc9b0;
+  background: linear-gradient(150deg, #fdf1e7 0%, #f9e6d7 100%);
+  color: var(--accent-deep);
+}
+
+.mood-option--clear {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.mood-option:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.mood-emoji {
+  font-size: 15px;
+  line-height: 1;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
 }
 
 .editor-content {
