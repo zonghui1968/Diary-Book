@@ -1,3 +1,20 @@
+/* 行书：Ma Shan Zheng，草书：Zhi Mang Xing，均为 SIL OFL 授权，随应用本地打包 */
+@font-face {
+  font-family: 'Ma Shan Zheng';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/MaShanZheng-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Zhi Mang Xing';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ZhiMangXing-Regular.ttf') format('truetype');
+}
+
 :root {
   --bg: #efe8da;
   --bg-deep: #e4dac7;
