@@ -1,3 +1,4 @@
+import { sanitizeAttachments } from './attachments';
 import type { DiaryEntry, EntryDraft } from './types';
 
 /** 生成实体 id；优先用 crypto.randomUUID，降级为时间戳 + 随机串 */
@@ -13,6 +14,8 @@ export function normalizeDraft(draft: EntryDraft): EntryDraft {
   return {
     title: draft.title.trim(),
     content: draft.content.replace(/\s+$/, ''),
+    // 始终返回数组，更新日记时才能清空旧附件
+    attachments: sanitizeAttachments(draft.attachments),
   };
 }
 

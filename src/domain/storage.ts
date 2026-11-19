@@ -1,3 +1,4 @@
+import { sanitizeAttachments } from './attachments';
 import { STORAGE_KEY } from './constants';
 import { isValidDateString } from './date';
 import { sortEntries } from './factory';
@@ -15,6 +16,7 @@ function isDiaryEntry(value: unknown): value is DiaryEntry {
     isValidDateString(entry.date) &&
     typeof entry.title === 'string' &&
     typeof entry.content === 'string' &&
+    (entry.attachments === undefined || Array.isArray(entry.attachments)) &&
     typeof entry.createdAt === 'string' &&
     typeof entry.updatedAt === 'string'
   );
@@ -52,7 +54,12 @@ export function loadEntries(storage: Storage): DiaryEntry[] {
       continue;
     }
     seenDates.add(item.date);
-    entries.push(item);
+    // 附件坏掉只丢附件，日记本身保留
+    entries.push(
+      item.attachments === undefined
+        ? item
+        : { ...item, attachments: sanitizeAttachments(item.attachments) },
+    );
   }
   return sortEntries(entries);
 }

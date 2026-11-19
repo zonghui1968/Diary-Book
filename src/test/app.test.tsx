@@ -34,6 +34,32 @@ describe('App', () => {
     expect(screen.getByText('已保存')).toBeInTheDocument();
   });
 
+  it('添加链接后保存，localStorage 与列表都反映附件', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.type(screen.getByLabelText('日记标题'), '带附件的日记');
+    await user.type(screen.getByLabelText('日记正文'), '今天读到一篇文章。');
+    await user.click(screen.getByRole('button', { name: '添加链接' }));
+    await user.type(screen.getByLabelText('链接标题'), '参考文章');
+    await user.type(screen.getByLabelText('链接网址'), 'https://example.com/post');
+    await user.click(screen.getByRole('button', { name: '确认添加链接' }));
+    await user.click(screen.getByRole('button', { name: '保存' }));
+
+    const stored = readStoredEntries();
+    expect(stored).toHaveLength(1);
+    expect(stored[0].attachments).toEqual([
+      {
+        id: expect.any(String),
+        kind: 'link',
+        title: '参考文章',
+        url: 'https://example.com/post',
+      },
+    ]);
+    expect(screen.getByText('📎 1')).toBeInTheDocument();
+    expect(screen.getByText('已保存')).toBeInTheDocument();
+  });
+
   it('删除日记后列表回到空状态', async () => {
     const user = userEvent.setup();
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
