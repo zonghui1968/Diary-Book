@@ -79,7 +79,7 @@ describe('storage', () => {
     expect(loadEntries(storage)).toEqual([ENTRY]);
   });
 
-  it('坏附件被剥离但日记本身保留', () => {
+it('坏附件被剥离但日记本身保留', () => {
     const storage = createMemoryStorage();
     storage.setItem(
       STORAGE_KEY,
@@ -109,6 +109,26 @@ describe('storage', () => {
     expect(entries[0].title).toBe(ENTRY.title);
     expect(entries[0].attachments).toEqual([
       { id: 'ok', kind: 'link', title: '示例', url: 'https://example.com/' },
+    ]);
+  });
+
+  it('缺少 mood 的旧数据仍可读', () => {
+    const storage = createMemoryStorage();
+    storage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, entries: [ENTRY] }));
+    expect(loadEntries(storage)).toEqual([ENTRY]);
+  });
+
+  it('合法 mood 原样读回，非法 mood 被剥离但日记保留', () => {
+    const storage = createMemoryStorage();
+    const withMood = { ...ENTRY, id: 'mood-ok', date: '2026-11-18', mood: 'calm' };
+    const badMood = { ...ENTRY, id: 'mood-bad', date: '2026-11-17', mood: 'ecstatic' };
+    storage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ version: 1, entries: [withMood, badMood] }),
+    );
+    expect(loadEntries(storage)).toEqual([
+      withMood,
+      { ...ENTRY, id: 'mood-bad', date: '2026-11-17' },
     ]);
   });
 
@@ -157,7 +177,7 @@ describe('upsertEntry', () => {
     expect(updated.title).toBe('改过的标题');
   });
 
-  it('更新时保存新附件，也能清除旧附件', () => {
+it('更新时保存新附件，也能清除旧附件', () => {
     const oldAttachment = {
       id: 'img-old',
       kind: 'image' as const,
@@ -189,5 +209,39 @@ describe('upsertEntry', () => {
     expect(replaced.attachments).toEqual([
       { id: 'link-new', kind: 'link', title: '新链接', url: 'https://example.com/' },
     ]);
+  });
+
+  it('新建时写入心情', () => {
+    const [created] = upsertEntry(
+      [],
+      '2026-11-19',
+      { title: '开心的一天', content: '正文', mood: 'happy' },
+      '2026-11-19T01:00:00.000Z',
+    );
+    expect(created.mood).toBe('happy');
+  });
+
+  it('更新时保留、覆盖或清除心情', () => {
+    const withMood: DiaryEntry = { ...ENTRY, mood: 'calm' };
+    const now = '2026-11-20T02:00:00.000Z';
+
+    const [kept] = upsertEntry([withMood], ENTRY.date, { title: '改', content: '改' }, now);
+    expect(kept.mood).toBe('calm');
+
+    const [replaced] = upsertEntry(
+      [withMood],
+      ENTRY.date,
+      { title: '改', content: '改', mood: 'sad' },
+      now,
+    );
+    expect(replaced.mood).toBe('sad');
+
+    const [cleared] = upsertEntry(
+      [withMood],
+      ENTRY.date,
+      { title: '改', content: '改', mood: null },
+      now,
+    );
+    expect(cleared).not.toHaveProperty('mood');
   });
 });

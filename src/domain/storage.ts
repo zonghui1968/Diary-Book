@@ -1,10 +1,22 @@
 import { sanitizeAttachments } from './attachments';
-import { STORAGE_KEY } from './constants';
+import { isMoodId, STORAGE_KEY } from './constants';
 import { isValidDateString } from './date';
 import { sortEntries } from './factory';
 import type { DiaryEntry } from './types';
 
-function isDiaryEntry(value: unknown): value is DiaryEntry {
+interface StoredEntryFields {
+  id: string;
+  date: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  mood?: unknown;
+  attachments?: unknown;
+}
+
+/** 校验除 mood/附件内容之外的基础字段 */
+function hasEntryFields(value: unknown): value is StoredEntryFields {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
@@ -20,6 +32,31 @@ function isDiaryEntry(value: unknown): value is DiaryEntry {
     typeof entry.createdAt === 'string' &&
     typeof entry.updatedAt === 'string'
   );
+}
+
+/**
+ * 读取单条记录：字段齐全时保留；非法 mood / 坏附件只剥离对应字段，
+ * 其他损坏返回 null。
+ */
+function readEntry(value: unknown): DiaryEntry | null {
+  if (!hasEntryFields(value)) {
+    return null;
+  }
+  const entry: DiaryEntry = {
+    id: value.id,
+    date: value.date,
+    title: value.title,
+    content: value.content,
+    createdAt: value.createdAt,
+    updatedAt: value.updatedAt,
+  };
+  if (isMoodId(value.mood)) {
+    entry.mood = value.mood;
+  }
+  if (value.attachments !== undefined) {
+    entry.attachments = sanitizeAttachments(value.attachments);
+  }
+  return entry;
 }
 
 /**
@@ -50,16 +87,12 @@ export function loadEntries(storage: Storage): DiaryEntry[] {
   const seenDates = new Set<string>();
   const entries: DiaryEntry[] = [];
   for (const item of list) {
-    if (!isDiaryEntry(item) || seenDates.has(item.date)) {
+    const entry = readEntry(item);
+    if (!entry || seenDates.has(entry.date)) {
       continue;
     }
-    seenDates.add(item.date);
-    // 附件坏掉只丢附件，日记本身保留
-    entries.push(
-      item.attachments === undefined
-        ? item
-        : { ...item, attachments: sanitizeAttachments(item.attachments) },
-    );
+    seenDates.add(entry.date);
+    entries.push(entry);
   }
   return sortEntries(entries);
 }

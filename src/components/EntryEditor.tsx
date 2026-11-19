@@ -1,8 +1,13 @@
 import { useRef, useState, type KeyboardEvent } from 'react';
-import { MAX_CONTENT_LENGTH, MAX_TITLE_LENGTH } from '../domain/constants';
+import {
+  MAX_CONTENT_LENGTH,
+  MAX_TITLE_LENGTH,
+  MOOD_BY_ID,
+} from '../domain/constants';
 import { formatChineseDate, relativeDayLabel, weekdayLabel } from '../domain/date';
 import type { Attachment, DiaryEntry, EntryDraft } from '../domain/types';
 import { AttachmentPanel } from './AttachmentPanel';
+import { MoodPicker } from './MoodPicker';
 
 const EMPTY_ATTACHMENTS: Attachment[] = [];
 
@@ -18,6 +23,7 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
   const [draft, setDraft] = useState<EntryDraft>(() => ({
     title: entry?.title ?? '',
     content: entry?.content ?? '',
+    mood: entry?.mood,
     attachments: entry?.attachments ?? EMPTY_ATTACHMENTS,
   }));
   const [saved, setSaved] = useState(false);
@@ -28,12 +34,14 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
   const isDirty =
     draft.title !== savedTitle ||
     draft.content !== savedContent ||
+    (draft.mood ?? undefined) !== entry?.mood ||
     draft.attachments !== savedAttachmentsRef.current;
   const isEmpty =
     draft.title.trim().length === 0 &&
     draft.content.trim().length === 0 &&
     (draft.attachments?.length ?? 0) === 0;
   const relative = relativeDayLabel(date, today);
+  const selectedMood = draft.mood ? MOOD_BY_ID[draft.mood] : undefined;
 
   const changeDraft = (patch: Partial<EntryDraft>) => {
     setDraft((current) => ({ ...current, ...patch }));
@@ -63,6 +71,16 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
           <p className="editor-date">
             {formatChineseDate(date)} · {weekdayLabel(date)}
             {relative && <span className="editor-relative">{relative}</span>}
+            {selectedMood && (
+              <span
+                className="editor-mood"
+                role="img"
+                aria-label={`心情：${selectedMood.label}`}
+                title={`心情：${selectedMood.label}`}
+              >
+                {selectedMood.emoji}
+              </span>
+            )}
           </p>
           <h2>{entry ? '编辑这一天' : '写下这一天'}</h2>
         </div>
@@ -94,6 +112,10 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
 
       <div className="editor-toolbar" role="toolbar" aria-label="编辑工具">
         <span className="editor-hint">正文会自动保存在本机浏览器中</span>
+        <MoodPicker
+          value={draft.mood ?? undefined}
+          onChange={(mood) => changeDraft({ mood })}
+        />
       </div>
 
       <textarea

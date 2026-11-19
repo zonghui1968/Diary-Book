@@ -3,6 +3,16 @@
  * 扩展字段一律声明为可选，保证旧数据可直接反序列化。
  */
 
+/** 当天心情，emoji 由 UI 层映射 */
+export type MoodId =
+  | 'happy'
+  | 'calm'
+  | 'loved'
+  | 'sad'
+  | 'anxious'
+  | 'angry'
+  | 'tired';
+
 /** 本地图片附件，dataUrl 为 data:image/… 形式 */
 export interface ImageAttachment {
   id: string;
@@ -42,7 +52,9 @@ export interface DiaryEntry {
   date: string;
   title: string;
   content: string;
-  /** 附件可选，旧数据没有该字段 */
+  /** 心情，早期数据没有该字段 */
+  mood?: MoodId;
+  /** 附件，早期数据没有该字段 */
   attachments?: Attachment[];
   /** ISO 8601 时间戳 */
   createdAt: string;
@@ -54,6 +66,8 @@ export interface DiaryEntry {
 export interface EntryDraft {
   title: string;
   content: string;
+  /** null 表示明确清除心情；undefined 表示未提及 */
+  mood?: MoodId | null;
   attachments?: Attachment[];
 }
 
