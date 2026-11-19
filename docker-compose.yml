@@ -1,0 +1,27 @@
+services:
+  db:
+    image: mysql:8.4
+    container_name: diary-book-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: diary_root
+      MYSQL_DATABASE: diary_book
+      MYSQL_USER: diary
+      MYSQL_PASSWORD: diary_pass
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - '3306:3306'
+    volumes:
+      - diary_mysql_data:/var/lib/mysql
+      - ./server/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-udiary', '-pdiary_pass']
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 20s
+
+volumes:
+  diary_mysql_data:

@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest';
-import { afterEach } from 'vitest';
+import { afterEach, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
 /**
@@ -37,6 +37,14 @@ if (!window.localStorage) {
     value: createMemoryStorage(),
   });
 }
+
+// 默认视为后端离线：现有组件测试走 localStorage 本地模式；api.test 内单独覆盖
+beforeEach(() => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() => Promise.reject(new Error('offline'))),
+  );
+});
 
 // 每个用例后清理 DOM 与 localStorage，保证用例互相隔离
 afterEach(() => {

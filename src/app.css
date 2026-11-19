@@ -816,6 +816,35 @@ textarea {
   letter-spacing: 0.04em;
 }
 
+.data-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.data-source-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+  box-shadow: 0 0 0 3px rgba(148, 138, 122, 0.14);
+}
+
+.data-source--server .data-source-dot {
+  background: #5d7a4f;
+  box-shadow: 0 0 0 3px rgba(93, 122, 79, 0.16);
+}
+
+.data-source--local .data-source-dot {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(180, 85, 45, 0.16);
+}
+
+.data-source--connecting .data-source-dot {
+  background: #c9a227;
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.16);
+}
+
 /* ------------------------------------------------------------- responsive */
 
 @media (max-width: 900px) {
