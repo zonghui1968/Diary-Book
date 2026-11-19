@@ -1,5 +1,6 @@
 import { useState, type KeyboardEvent } from 'react';
-import { MAX_CONTENT_LENGTH, MAX_TITLE_LENGTH } from '../domain/constants';
+import { FontPicker } from './FontPicker';
+import { fontFamilyOf, MAX_CONTENT_LENGTH, MAX_TITLE_LENGTH } from '../domain/constants';
 import { formatChineseDate, relativeDayLabel, weekdayLabel } from '../domain/date';
 import type { DiaryEntry, EntryDraft } from '../domain/types';
 
@@ -15,12 +16,16 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
   const [draft, setDraft] = useState<EntryDraft>({
     title: entry?.title ?? '',
     content: entry?.content ?? '',
+    font: entry?.font,
   });
   const [saved, setSaved] = useState(false);
 
   const savedTitle = entry?.title ?? '';
   const savedContent = entry?.content ?? '';
-  const isDirty = draft.title !== savedTitle || draft.content !== savedContent;
+  const isDirty =
+    draft.title !== savedTitle ||
+    draft.content !== savedContent ||
+    (draft.font ?? undefined) !== entry?.font;
   const isEmpty = draft.title.trim().length === 0 && draft.content.trim().length === 0;
   const relative = relativeDayLabel(date, today);
 
@@ -81,6 +86,10 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
       />
 
       <div className="editor-toolbar" role="toolbar" aria-label="编辑工具">
+        <FontPicker
+          value={draft.font ?? undefined}
+          onChange={(font) => changeDraft({ font })}
+        />
         <span className="editor-hint">正文会自动保存在本机浏览器中</span>
       </div>
 
@@ -90,6 +99,10 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
         maxLength={MAX_CONTENT_LENGTH}
         placeholder="今天发生了什么？此刻在想什么？"
         aria-label="日记正文"
+        style={{
+          fontFamily: fontFamilyOf(draft.font ?? undefined),
+          ...(draft.font === 'cao' ? { lineHeight: 2.4 } : {}),
+        }}
         onChange={(event) => changeDraft({ content: event.target.value })}
       />
 

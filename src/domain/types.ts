@@ -3,6 +3,9 @@
  * 扩展字段一律声明为可选，保证旧数据可直接反序列化。
  */
 
+/** 正文字体：楷书 / 行书 / 草书 */
+export type FontId = 'kai' | 'xing' | 'cao';
+
 /** 一篇日记（持久化形态） */
 export interface DiaryEntry {
   id: string;
@@ -10,6 +13,8 @@ export interface DiaryEntry {
   date: string;
   title: string;
   content: string;
+  /** 正文字体；缺省表示默认字体 */
+  font?: FontId;
   /** ISO 8601 时间戳 */
   createdAt: string;
   /** ISO 8601 时间戳 */
@@ -20,6 +25,8 @@ export interface DiaryEntry {
 export interface EntryDraft {
   title: string;
   content: string;
+  /** 正文字体；null / undefined 表示默认字体 */
+  font?: FontId | null;
 }
 
 /** localStorage 信封，version 用于以后迁移 */

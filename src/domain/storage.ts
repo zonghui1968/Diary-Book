@@ -1,4 +1,4 @@
-import { STORAGE_KEY } from './constants';
+import { isFontId, STORAGE_KEY } from './constants';
 import { isValidDateString } from './date';
 import { sortEntries } from './factory';
 import type { DiaryEntry } from './types';
@@ -16,7 +16,8 @@ function isDiaryEntry(value: unknown): value is DiaryEntry {
     typeof entry.title === 'string' &&
     typeof entry.content === 'string' &&
     typeof entry.createdAt === 'string' &&
-    typeof entry.updatedAt === 'string'
+    typeof entry.updatedAt === 'string' &&
+    (entry.font === undefined || isFontId(entry.font))
   );
 }
 
@@ -48,11 +49,19 @@ export function loadEntries(storage: Storage): DiaryEntry[] {
   const seenDates = new Set<string>();
   const entries: DiaryEntry[] = [];
   for (const item of list) {
-    if (!isDiaryEntry(item) || seenDates.has(item.date)) {
+    if (typeof item !== 'object' || item === null) {
       continue;
     }
-    seenDates.add(item.date);
-    entries.push(item);
+    // 非法字体只剥离字体字段，不连整条日记一起丢弃
+    const candidate: Record<string, unknown> = { ...item };
+    if (candidate.font !== undefined && !isFontId(candidate.font)) {
+      delete candidate.font;
+    }
+    if (!isDiaryEntry(candidate) || seenDates.has(candidate.date)) {
+      continue;
+    }
+    seenDates.add(candidate.date);
+    entries.push(candidate);
   }
   return sortEntries(entries);
 }

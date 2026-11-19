@@ -1,3 +1,4 @@
+import { isFontId } from './constants';
 import type { DiaryEntry, EntryDraft } from './types';
 
 /** 生成实体 id；优先用 crypto.randomUUID，降级为时间戳 + 随机串 */
@@ -8,11 +9,15 @@ export function makeId(): string {
   return `e_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-/** 规整草稿：标题去首尾空白，正文去掉行尾空白但保留内部换行 */
-export function normalizeDraft(draft: EntryDraft): EntryDraft {
+/** 规整后的草稿：字体已收敛为合法 id 或 undefined，可直接写入实体 */
+export type NormalizedDraft = Pick<DiaryEntry, 'title' | 'content' | 'font'>;
+
+/** 规整草稿：标题去首尾空白，正文去掉行尾空白但保留内部换行；非法字体视为未选 */
+export function normalizeDraft(draft: EntryDraft): NormalizedDraft {
   return {
     title: draft.title.trim(),
     content: draft.content.replace(/\s+$/, ''),
+    font: isFontId(draft.font) ? draft.font : undefined,
   };
 }
 
