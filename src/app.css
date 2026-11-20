@@ -433,41 +433,41 @@ textarea {
   gap: 6px;
 }
 
-.font-option {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 7px;
-  padding: 4px 10px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--paper);
-  color: var(--ink-soft);
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    transform 0.15s ease;
+.font-select {
+  min-height: 28px;
+  max-width: 100%;
 }
 
-.font-option:hover {
-  border-color: var(--line-strong);
-  background: var(--paper-soft);
-  transform: translateY(-1px);
-}
-
-.font-option.is-active {
-  border-color: #ecc9b0;
-  background: linear-gradient(150deg, #fdf1e7 0%, #f9e6d7 100%);
-  color: var(--accent-deep);
-}
-
-.font-option-label {
+.font-select-label {
+  color: var(--muted);
   font-family: var(--font-ui);
-  font-size: 11px;
+  font-size: 11.5px;
   letter-spacing: 0.04em;
 }
 
-.font-option-sample {
+.font-select select {
+  height: 28px;
+  max-width: 100%;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.font-select select:hover {
+  border-color: var(--line-strong);
+  background: var(--paper-soft);
+}
+
+.font-select-preview {
+  color: var(--ink-soft);
   font-size: 14px;
   line-height: 1.2;
   white-space: nowrap;
@@ -768,7 +768,7 @@ textarea {
 }
 
 .button:focus-visible,
-.font-option:focus-visible,
+.font-select select:focus-visible,
 .entry-item:focus-visible,
 .date-jump input:focus-visible {
   outline: 2px solid var(--accent);

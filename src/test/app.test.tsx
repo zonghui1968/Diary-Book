@@ -99,7 +99,7 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: '行书' }));
+    await user.selectOptions(screen.getByLabelText('正文字体'), 'xing');
     await user.type(screen.getByLabelText('日记正文'), '落笔自带行书的连势。');
     await user.click(screen.getByRole('button', { name: '保存' }));
 
@@ -117,7 +117,7 @@ describe('App', () => {
     const textarea = screen.getByLabelText('日记正文');
     expect(textarea).toHaveValue('落笔自带行书的连势。');
     expect(textarea.style.fontFamily).toContain('Ma Shan Zheng');
-    expect(screen.getByRole('button', { name: '行书' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByLabelText('正文字体')).toHaveValue('xing');
     expect(screen.getByTitle('字体：行书')).toHaveTextContent('行');
   });
 });
