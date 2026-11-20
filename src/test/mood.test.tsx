@@ -5,41 +5,49 @@ import { MoodPicker } from '../components/MoodPicker';
 import { MOODS } from '../domain/constants';
 
 describe('MoodPicker', () => {
-  it('渲染全部心情与不记录按钮', () => {
+  it('下拉包含不记录与全部心情选项', () => {
     render(<MoodPicker value={undefined} onChange={() => {}} />);
 
-    expect(screen.getByRole('group', { name: '今天的心情' })).toBeInTheDocument();
-    for (const mood of MOODS) {
-      const option = screen.getByRole('button', { name: mood.label });
-      expect(option).toHaveAttribute('aria-pressed', 'false');
-      expect(option).toHaveTextContent(mood.emoji);
+    const select = screen.getByLabelText('今天的心情');
+    expect(select.tagName).toBe('SELECT');
+    expect(select).toHaveValue('');
+
+    const options = screen.getAllByRole('option');
+    expect(options).toHaveLength(MOODS.length + 1);
+    expect(options[0]).toHaveTextContent('不记录');
+    for (const [index, mood] of MOODS.entries()) {
+      const option = options[index + 1];
+      expect(option).toHaveValue(mood.id);
+      expect(option).toHaveTextContent(`${mood.emoji} ${mood.label}`);
     }
-    expect(screen.getByRole('button', { name: '不记录心情' })).toBeInTheDocument();
   });
 
-  it('点击心情回调对应 id', async () => {
+  it('选中文本反映当前心情', () => {
+    render(<MoodPicker value="calm" onChange={() => {}} />);
+
+    const select = screen.getByLabelText<HTMLSelectElement>('今天的心情');
+    expect(select).toHaveValue('calm');
+    expect(select.selectedOptions[0]?.textContent).toBe('😌 平静');
+  });
+
+  it('选择心情回调对应 id', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(<MoodPicker value={undefined} onChange={onChange} />);
 
-    await user.click(screen.getByRole('button', { name: '难过' }));
+    await user.selectOptions(screen.getByLabelText('今天的心情'), 'happy');
 
-    expect(onChange).toHaveBeenCalledWith('sad');
+    expect(onChange).toHaveBeenCalledWith('happy');
   });
 
-  it('再次点击已选中的心情取消，点不记录也清除', async () => {
+  it('选择不记录回调 undefined', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(<MoodPicker value="calm" onChange={onChange} />);
+    render(<MoodPicker value="sad" onChange={onChange} />);
 
-    const calm = screen.getByRole('button', { name: '平静' });
-    expect(calm).toHaveAttribute('aria-pressed', 'true');
+    const select = screen.getByLabelText('今天的心情');
+    await user.selectOptions(select, '');
 
-    await user.click(calm);
     expect(onChange).toHaveBeenLastCalledWith(undefined);
-
-    await user.click(screen.getByRole('button', { name: '不记录心情' }));
-    expect(onChange).toHaveBeenLastCalledWith(undefined);
-    expect(onChange).toHaveBeenCalledTimes(2);
   });
 });

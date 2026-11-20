@@ -425,12 +425,18 @@ textarea {
   color: var(--muted);
 }
 
-.font-picker,
-.mood-picker {
+.font-picker {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.mood-picker {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .font-option {
@@ -473,18 +479,29 @@ textarea {
   white-space: nowrap;
 }
 
-.mood-option {
+.mood-select {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mood-select select {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 26px;
+  max-width: 100%;
+  padding: 0 26px 0 10px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--paper-soft);
   color: var(--ink-soft);
   font-family: var(--font-ui);
   font-size: 11.5px;
-  line-height: 1.5;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
   cursor: pointer;
   transition:
     background 0.15s ease,
@@ -492,31 +509,31 @@ textarea {
     color 0.15s ease;
 }
 
-.mood-option:hover {
+.mood-select select:hover {
   border-color: var(--line-strong);
   background: var(--paper);
 }
 
-.mood-option.is-active {
-  border-color: #ecc9b0;
-  background: linear-gradient(150deg, #fdf1e7 0%, #f9e6d7 100%);
-  color: var(--accent-deep);
-}
-
-.mood-option--clear {
-  border-style: dashed;
-  color: var(--muted);
-}
-
-.mood-option:focus-visible {
+.mood-select select:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-.mood-emoji {
-  font-size: 15px;
+.mood-select::after {
+  content: '▾';
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-ui);
+  font-size: 10px;
   line-height: 1;
-  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.mood-select:has(select:focus-visible)::after {
+  color: var(--accent);
 }
 
 .editor-content {
