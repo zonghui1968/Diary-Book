@@ -1,5 +1,5 @@
 import { sanitizeAttachments } from './attachments';
-import { isFontId, isMoodId } from './constants';
+import { isFontId, isMoodId, isWeatherId } from './constants';
 import type { DiaryEntry, EntryDraft } from './types';
 
 /** 生成实体 id；优先用 crypto.randomUUID，降级为时间戳 + 随机串 */
@@ -20,6 +20,7 @@ export function normalizeDraft(draft: EntryDraft): EntryDraft {
     content: draft.content.replace(/\s+$/, ''),
     font: isFontId(draft.font) ? draft.font : undefined,
     mood: isMoodId(draft.mood) ? draft.mood : undefined,
+    weather: isWeatherId(draft.weather) ? draft.weather : undefined,
     attachments: sanitizeAttachments(draft.attachments),
   };
 }
@@ -28,6 +29,7 @@ export function normalizeDraft(draft: EntryDraft): EntryDraft {
  * 同一天只保留一篇：已存在则更新标题/正文/附件并刷新 updatedAt，
  * 不存在则新建并插入到列表最前面。纯函数，不修改入参。
  * 草稿不含 mood 时更新保留原心情；含 null 时删除该字段。
+ * 天气与心情同语义：省略保留旧值，null 或非法值清除。
  * 字体按草稿为准，未选字体则清除旧字体。
  */
 export function upsertEntry(
@@ -63,6 +65,13 @@ export function upsertEntry(
           delete next.mood;
         }
       }
+      if ('weather' in draft) {
+        if (normalized.weather) {
+          next.weather = normalized.weather;
+        } else {
+          delete next.weather;
+        }
+      }
       return next;
     });
   }
@@ -81,6 +90,9 @@ export function upsertEntry(
   }
   if (normalized.mood) {
     created.mood = normalized.mood;
+  }
+  if (normalized.weather) {
+    created.weather = normalized.weather;
   }
   return [created, ...entries];
 }

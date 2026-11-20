@@ -10,6 +10,7 @@ import { formatChineseDate, relativeDayLabel, weekdayLabel } from '../domain/dat
 import type { Attachment, DiaryEntry, EntryDraft } from '../domain/types';
 import { AttachmentPanel } from './AttachmentPanel';
 import { MoodPicker } from './MoodPicker';
+import { WeatherPicker } from './WeatherPicker';
 
 const EMPTY_ATTACHMENTS: Attachment[] = [];
 
@@ -27,6 +28,7 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
     content: entry?.content ?? '',
     font: entry?.font,
     mood: entry?.mood,
+    weather: entry?.weather,
     attachments: entry?.attachments ?? EMPTY_ATTACHMENTS,
   }));
   const [saved, setSaved] = useState(false);
@@ -39,6 +41,7 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
     draft.content !== savedContent ||
     (draft.font ?? undefined) !== entry?.font ||
     (draft.mood ?? undefined) !== entry?.mood ||
+    (draft.weather ?? undefined) !== entry?.weather ||
     draft.attachments !== savedAttachmentsRef.current;
   const isEmpty =
     draft.title.trim().length === 0 &&
@@ -124,18 +127,19 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
           value={draft.mood ?? undefined}
           onChange={(mood) => changeDraft({ mood })}
         />
+        <WeatherPicker
+          value={draft.weather ?? undefined}
+          onChange={(weather) => changeDraft({ weather })}
+        />
       </div>
 
       <textarea
-        className="editor-content"
+        className="editor-content editor-content--ruled"
         value={draft.content}
         maxLength={MAX_CONTENT_LENGTH}
         placeholder="今天发生了什么？此刻在想什么？"
         aria-label="日记正文"
-        style={{
-          fontFamily: fontFamilyOf(draft.font ?? undefined),
-          ...(draft.font === 'cao' ? { lineHeight: 2.4 } : {}),
-        }}
+        style={{ fontFamily: fontFamilyOf(draft.font ?? undefined) }}
         onChange={(event) => changeDraft({ content: event.target.value })}
       />
 
