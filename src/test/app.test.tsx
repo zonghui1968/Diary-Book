@@ -65,7 +65,7 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole('button', { name: '开心' }));
+    await user.selectOptions(screen.getByLabelText('今天的心情'), 'happy');
     await user.type(screen.getByLabelText('日记标题'), '有心情的一天');
     await user.type(screen.getByLabelText('日记正文'), '今天很开心。');
     await user.click(screen.getByRole('button', { name: '保存' }));
