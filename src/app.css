@@ -904,3 +904,479 @@ textarea {
     gap: 2px;
   }
 }
+/* ================================================================ 3D 日记本 */
+/* 书桌氛围 + 舞台：合上时只有封面，打开后摊成左右两页 */
+
+.book-stage {
+  position: relative;
+  height: 100%;
+  perspective: 2400px;
+  perspective-origin: 50% 40%;
+  overflow: hidden;
+}
+
+.book-stage::before {
+  /* 桌面柔光与暗角，合上封面时两侧留白 */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(720px 420px at 50% 34%, rgba(255, 251, 242, 0.5), transparent 70%),
+    radial-gradient(1400px 900px at 50% 120%, rgba(92, 68, 40, 0.16), transparent 70%);
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ 内页 */
+
+.book-pages {
+  position: absolute;
+  inset: clamp(12px, 2.4vw, 30px);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  background:
+    radial-gradient(130% 70% at 50% 0%, rgba(255, 255, 255, 0.85), transparent 62%),
+    linear-gradient(180deg, #fffdf8 0%, #fbf5e8 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(214, 201, 178, 0.9),
+    0 0 0 1px rgba(233, 221, 199, 0.9),
+    3px 3px 0 1px #f4ead8,
+    6px 6px 0 3px #eee0c8,
+    0 42px 80px -34px rgba(72, 52, 28, 0.55),
+    0 16px 32px -24px rgba(72, 52, 28, 0.4);
+  opacity: 0;
+  transform: translateY(12px) scale(0.972);
+  pointer-events: none;
+  transition:
+    opacity 300ms ease,
+    transform 360ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.book-stage.is-open .book-pages {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  transition-delay: 300ms;
+}
+
+.book-pages-spread {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  padding: clamp(14px, 2vw, 24px) clamp(14px, 2.2vw, 30px) 46px;
+}
+
+.book-pages .app-shell {
+  flex: 1 1 auto;
+  padding: 0;
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
+}
+
+/* 左页索引 + 右页正文：共用一条中缝 */
+.book-stage .app-main {
+  grid-template-columns: clamp(240px, 30%, 360px) minmax(0, 1fr);
+  gap: 0;
+}
+
+.book-stage .sidebar {
+  border: 0;
+  border-radius: 12px 0 0 12px;
+  background:
+    linear-gradient(270deg, rgba(96, 72, 44, 0.1), transparent 26px),
+    linear-gradient(180deg, #fffdf8 0%, #fbf4e8 100%);
+  box-shadow: inset -26px 0 30px -26px rgba(72, 52, 28, 0.55);
+}
+
+.book-stage .editor-pane {
+  border: 0;
+  border-radius: 0 12px 12px 0;
+  background:
+    linear-gradient(90deg, rgba(96, 72, 44, 0.12), transparent 30px),
+    linear-gradient(180deg, rgba(255, 253, 248, 0.96), rgba(255, 252, 245, 0.98)),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 33px,
+      rgba(230, 220, 203, 0.35) 33px 34px
+    );
+  box-shadow: inset 26px 0 30px -26px rgba(72, 52, 28, 0.55);
+}
+
+.book-pages-chrome {
+  position: absolute;
+  right: calc(clamp(12px, 2.4vw, 30px) + 16px);
+  bottom: calc(clamp(12px, 2.4vw, 30px) + 8px);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition:
+    opacity 240ms ease,
+    transform 240ms ease;
+}
+
+.book-stage.is-open .book-pages-chrome {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  transition-delay: 320ms;
+}
+
+.page-number {
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.book-close {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: rgba(255, 253, 248, 0.88);
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+}
+
+.book-close:hover {
+  background: var(--paper-soft);
+  border-color: var(--accent);
+  color: var(--accent-deep);
+}
+
+.book-close:focus-visible,
+.book-cover:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ------------------------------------------------------------------ 封面 */
+
+.book-cover {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  width: min(400px, 72vw, 56vh);
+  aspect-ratio: 0.73;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transform-origin: left center;
+  transform: translate(-50%, -50%) rotateY(-16deg);
+  transition:
+    transform 880ms cubic-bezier(0.24, 0.78, 0.28, 1),
+    opacity 680ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 底面投影，跟随封面浮起 */
+.book-cover::after {
+  content: '';
+  position: absolute;
+  left: 4%;
+  right: 2%;
+  bottom: -26px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(60, 40, 20, 0.42), transparent 72%);
+  filter: blur(7px);
+  transform: translateZ(-24px);
+  transition: opacity 0.3s ease;
+}
+
+.book-cover:hover {
+  transform: translate(-50%, calc(-50% - 7px)) rotateY(-16deg);
+}
+
+.book-cover:hover::after {
+  opacity: 0.7;
+}
+
+.book-stage.is-open .book-cover {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) rotateY(-150deg);
+  transition:
+    transform 900ms cubic-bezier(0.24, 0.78, 0.28, 1),
+    opacity 560ms ease 340ms;
+}
+
+.book-cover-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 6px 16px 16px 6px;
+  background:
+    radial-gradient(120% 100% at 18% 0%, rgba(255, 255, 255, 0.1), transparent 55%),
+    linear-gradient(115deg, #4b3a29 0%, #3a2c1e 46%, #2b2117 100%);
+  box-shadow:
+    0 38px 62px -24px rgba(52, 36, 20, 0.62),
+    inset 0 0 0 1px rgba(214, 180, 128, 0.2),
+    inset 0 2px 0 rgba(255, 240, 214, 0.16);
+}
+
+/* 右侧露出的书页边缘 */
+.book-cover-edges {
+  position: absolute;
+  top: 3%;
+  bottom: 3%;
+  right: -11px;
+  width: 14px;
+  border-radius: 0 8px 8px 0;
+  background: repeating-linear-gradient(90deg, #f8f0e0 0 1px, #e6dac3 1px 2.6px);
+  box-shadow:
+    2px 0 8px rgba(60, 40, 20, 0.3),
+    inset -1px 0 0 rgba(150, 120, 80, 0.25);
+  transform: translateZ(-8px);
+}
+
+/* 书脊压痕 */
+.book-cover-spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 7%;
+  border-radius: 6px 0 0 6px;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.5) 0%,
+    rgba(255, 255, 255, 0.06) 55%,
+    rgba(0, 0, 0, 0.28) 100%
+  );
+  box-shadow:
+    inset -1px 0 0 rgba(0, 0, 0, 0.35),
+    inset 3px 0 7px rgba(0, 0, 0, 0.3);
+}
+
+.book-cover-spine::after {
+  content: '';
+  position: absolute;
+  top: 4%;
+  bottom: 4%;
+  left: 52%;
+  width: 1px;
+  background: rgba(255, 232, 196, 0.16);
+}
+
+/* 封面细线边框与文字 */
+.book-cover-frame {
+  position: absolute;
+  inset: 9%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 6%;
+  border: 1px solid rgba(217, 181, 125, 0.5);
+  color: #e8cfa3;
+  text-align: center;
+}
+
+.book-cover-frame::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(217, 181, 125, 0.22);
+  pointer-events: none;
+}
+
+.book-cover-kicker {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 0.5em;
+  text-indent: 0.5em;
+  color: rgba(232, 207, 163, 0.72);
+}
+
+.book-cover-title {
+  font-family: 'Ma Shan Zheng', var(--font-body);
+  font-size: clamp(30px, 4.6vw, 42px);
+  letter-spacing: 0.16em;
+  text-indent: 0.16em;
+  line-height: 1.2;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.book-cover-rule {
+  width: 46px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(217, 181, 125, 0.8), transparent);
+}
+
+.book-cover-subtitle {
+  font-family: var(--font-body);
+  font-size: 13px;
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+  color: rgba(232, 207, 163, 0.82);
+}
+
+.book-cover-year {
+  position: absolute;
+  bottom: 7%;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  color: rgba(232, 207, 163, 0.58);
+}
+
+.book-cover-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    118deg,
+    transparent 28%,
+    rgba(255, 244, 220, 0.2) 46%,
+    transparent 64%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.book-cover:hover .book-cover-sheen {
+  opacity: 1;
+}
+
+/* 角落纹样 */
+.book-cover-ornament {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  color: rgba(232, 207, 163, 0.5);
+}
+
+.book-cover-ornament path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.1;
+}
+
+.book-cover-ornament circle {
+  fill: currentColor;
+  stroke: none;
+}
+
+.book-cover-ornament--tl {
+  top: 14px;
+  left: 16px;
+}
+
+.book-cover-ornament--br {
+  right: 16px;
+  bottom: 14px;
+  transform: rotate(180deg);
+}
+
+/* 丝带书签 */
+.book-cover-ribbon {
+  position: absolute;
+  top: -2%;
+  right: 15%;
+  width: 16px;
+  height: 106%;
+  background: linear-gradient(180deg, #b4552d 0%, #8f3f1e 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 88%, 0 100%);
+  box-shadow: 0 6px 14px rgba(80, 40, 20, 0.35);
+  z-index: 1;
+}
+
+/* ------------------------------------------------------------- 书壳响应式 */
+
+@media (max-width: 900px) {
+  .book-stage {
+    /* 移动端舞台保持一屏，内页自行滚动 */
+    height: 100%;
+    min-height: 0;
+  }
+
+  .book-pages {
+    overflow-y: auto;
+  }
+
+  .book-pages-spread {
+    padding: 12px 12px 52px;
+  }
+
+  /* 移动端页面内部滚动，页码与合上按钮固定贴在舞台底部 */
+  .book-pages-chrome {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    justify-content: flex-end;
+    padding: 18px 14px 10px;
+    background: linear-gradient(
+      180deg,
+      rgba(251, 245, 232, 0) 0%,
+      rgba(251, 245, 232, 0.94) 45%
+    );
+  }
+
+  .book-pages .app-shell {
+    height: auto;
+    min-height: 100%;
+  }
+
+  .book-stage .app-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .book-stage .sidebar {
+    border-radius: 12px 12px 0 0;
+    box-shadow: inset 0 -24px 26px -26px rgba(72, 52, 28, 0.5);
+  }
+
+  .book-stage .editor-pane {
+    border-radius: 0 0 12px 12px;
+    box-shadow: inset 0 24px 26px -26px rgba(72, 52, 28, 0.5);
+  }
+
+  .book-cover {
+    width: min(360px, 78vw, 52vh);
+  }
+}
+
+@media (max-width: 560px) {
+  .book-pages-chrome {
+    justify-content: space-between;
+  }
+
+  .book-cover-title {
+    font-size: 30px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-cover,
+  .book-cover::after,
+  .book-cover-sheen,
+  .book-pages,
+  .book-pages-chrome {
+    transition: none !important;
+  }
+
+  .book-cover:hover {
+    transform: translate(-50%, -50%) rotateY(-16deg);
+  }
+}

@@ -1,10 +1,15 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import App from '../App';
 import { STORAGE_KEY } from '../domain/constants';
 import { todayString } from '../domain/date';
 import type { EntriesEnvelope } from '../domain/types';
+
+/** 封面默认合上，正文在书里：每个用例先翻开日记本 */
+async function openBook(user: UserEvent) {
+  await user.click(screen.getByRole('button', { name: '打开日记本' }));
+}
 
 function readStoredEntries(): EntriesEnvelope['entries'] {
   const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -18,6 +23,7 @@ describe('App', () => {
   it('可以写一篇日记并保存到 localStorage', async () => {
     const user = userEvent.setup();
     render(<App />);
+    await openBook(user);
 
     expect(screen.getByRole('heading', { name: '拾光日记' })).toBeInTheDocument();
 
@@ -38,6 +44,7 @@ describe('App', () => {
   it('添加链接后保存，localStorage 与列表都反映附件', async () => {
     const user = userEvent.setup();
     render(<App />);
+    await openBook(user);
 
     await user.type(screen.getByLabelText('日记标题'), '带附件的日记');
     await user.type(screen.getByLabelText('日记正文'), '今天读到一篇文章。');
@@ -64,6 +71,7 @@ describe('App', () => {
   it('选择心情并保存后写入 localStorage，列表显示 emoji', async () => {
     const user = userEvent.setup();
     render(<App />);
+    await openBook(user);
 
     await user.selectOptions(screen.getByLabelText('今天的心情'), 'happy');
     await user.type(screen.getByLabelText('日记标题'), '有心情的一天');
@@ -84,6 +92,7 @@ describe('App', () => {
     const user = userEvent.setup();
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     render(<App />);
+    await openBook(user);
 
     await user.type(screen.getByLabelText('日记标题'), '临时');
     await user.type(screen.getByLabelText('日记正文'), '稍后删除');
@@ -98,6 +107,7 @@ describe('App', () => {
   it('选行书写作后保存字体，切换日期再切回来重新应用', async () => {
     const user = userEvent.setup();
     render(<App />);
+    await openBook(user);
 
     await user.selectOptions(screen.getByLabelText('正文字体'), 'xing');
     await user.type(screen.getByLabelText('日记正文'), '落笔自带行书的连势。');
