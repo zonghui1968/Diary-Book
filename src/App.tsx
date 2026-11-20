@@ -10,11 +10,17 @@ import {
   weekdayLabel,
 } from './domain/date';
 import type { EntryDraft } from './domain/types';
-import { useEntries } from './hooks/useEntries';
+import { useEntries, type DataSource } from './hooks/useEntries';
+
+const DATA_SOURCE_LABELS: Record<DataSource, string> = {
+  connecting: '正在连接 MySQL…',
+  server: '已连接 MySQL',
+  local: '本地模式（后端未连接）',
+};
 
 export default function App() {
   const currentDay = useMemo(() => todayString(), []);
-  const { entries, getEntry, saveEntry, removeEntry } = useEntries();
+  const { entries, getEntry, saveEntry, removeEntry, dataSource } = useEntries();
   const [selectedDate, setSelectedDate] = useState(currentDay);
   const [bookOpen, setBookOpen] = useState(false);
 
@@ -123,8 +129,11 @@ export default function App() {
           </section>
         </main>
 
-        <footer className="app-footer">
-          <span>内容只保存在这台设备的浏览器里</span>
+<footer className="app-footer">
+          <span className={`data-source data-source--${dataSource}`} role="status">
+            <span className="data-source-dot" aria-hidden="true" />
+            {DATA_SOURCE_LABELS[dataSource]}
+          </span>
           <span>拾光日记 · 本地版</span>
         </footer>
       </div>
