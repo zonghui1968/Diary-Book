@@ -152,6 +152,20 @@ describe('storage', () => {
     ]);
   });
 
+  it('合法 weather 原样读回，非法 weather 被剥离但日记保留', () => {
+    const storage = createMemoryStorage();
+    const withWeather = { ...ENTRY, id: 'weather-ok', date: '2026-11-18', weather: 'snow' };
+    const badWeather = { ...ENTRY, id: 'weather-bad', date: '2026-11-17', weather: 'hail' };
+    storage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ version: 1, entries: [withWeather, badWeather] }),
+    );
+    expect(loadEntries(storage)).toEqual([
+      withWeather,
+      { ...ENTRY, id: 'weather-bad', date: '2026-11-17' },
+    ]);
+  });
+
   it('写入失败时返回 false 而不是抛错', () => {
     const storage: Storage = {
       length: 0,
@@ -313,5 +327,40 @@ describe('upsertEntry', () => {
       now,
     );
     expect(cleared).not.toHaveProperty('mood');
+  });
+
+  it('新建与更新都持久化天气，省略保留旧值，null 与非法值清除', () => {
+    const now = '2026-11-20T02:00:00.000Z';
+    const [created] = upsertEntry(
+      [],
+      ENTRY.date,
+      { title: '雪天', content: '下了小雪', weather: 'snow' },
+      now,
+    );
+    expect(created.weather).toBe('snow');
+
+    const [kept] = upsertEntry(
+      [created],
+      ENTRY.date,
+      { title: '改', content: '改' },
+      now,
+    );
+    expect(kept.weather).toBe('snow');
+
+    const [cleared] = upsertEntry(
+      [created],
+      ENTRY.date,
+      { title: '改', content: '改', weather: null },
+      now,
+    );
+    expect(cleared).not.toHaveProperty('weather');
+
+    const [invalid] = upsertEntry(
+      [created],
+      ENTRY.date,
+      { title: '改', content: '改', weather: 'hail' as unknown as DiaryEntry['weather'] },
+      now,
+    );
+    expect(invalid).not.toHaveProperty('weather');
   });
 });

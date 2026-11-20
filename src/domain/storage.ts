@@ -1,5 +1,5 @@
 import { sanitizeAttachments } from './attachments';
-import { isFontId, isMoodId, STORAGE_KEY } from './constants';
+import { isFontId, isMoodId, isWeatherId, STORAGE_KEY } from './constants';
 import { isValidDateString } from './date';
 import { sortEntries } from './factory';
 import type { DiaryEntry } from './types';
@@ -13,6 +13,7 @@ interface StoredEntryFields {
   updatedAt: string;
   font?: unknown;
   mood?: unknown;
+  weather?: unknown;
   attachments?: unknown;
 }
 
@@ -36,7 +37,7 @@ function hasEntryFields(value: unknown): value is StoredEntryFields {
 }
 
 /**
- * 读取单条记录：字段齐全时保留；非法字体 / 心情 / 坏附件只剥离对应字段，
+ * 读取单条记录：字段齐全时保留；非法字体 / 心情 / 天气 / 坏附件只剥离对应字段，
  * 其他损坏返回 null。
  */
 function readEntry(value: unknown): DiaryEntry | null {
@@ -53,6 +54,9 @@ function readEntry(value: unknown): DiaryEntry | null {
   };
   if (isMoodId(value.mood)) {
     entry.mood = value.mood;
+  }
+  if (isWeatherId(value.weather)) {
+    entry.weather = value.weather;
   }
   if (isFontId(value.font)) {
     entry.font = value.font;

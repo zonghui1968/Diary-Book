@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { EntryEditor } from './components/EntryEditor';
 import { EntryList } from './components/EntryList';
+import { NotebookPage } from './components/NotebookPage';
+import { PageTurn, type PageTurnDirection } from './components/PageTurn';
 import { APP_NAME, APP_TAGLINE } from './domain/constants';
 import {
   formatChineseDate,
@@ -15,13 +16,39 @@ export default function App() {
   const currentDay = useMemo(() => todayString(), []);
   const { entries, getEntry, saveEntry, removeEntry } = useEntries();
   const [selectedDate, setSelectedDate] = useState(currentDay);
+  const [turnDirection, setTurnDirection] = useState<PageTurnDirection>('next');
 
   const selectedEntry = getEntry(selectedDate);
   const isToday = selectedDate === currentDay;
 
+  const sortedDates = useMemo(
+    () => [...entries].map((entry) => entry.date).sort((a, b) => a.localeCompare(b)),
+    [entries],
+  );
+  const selectedIndex = sortedDates.indexOf(selectedDate);
+  // 没有 entry 的日期概念上排在最后一页之后
+  const pageNumber = selectedIndex >= 0 ? selectedIndex + 1 : sortedDates.length + 1;
+  const pageCount = sortedDates.length + (selectedIndex >= 0 ? 0 : 1);
+  const prevDate = useMemo(() => {
+    const earlier = sortedDates.filter((date) => date < selectedDate);
+    return earlier.length > 0 ? earlier[earlier.length - 1] : undefined;
+  }, [sortedDates, selectedDate]);
+  const nextDate = useMemo(
+    () => sortedDates.find((date) => date > selectedDate),
+    [sortedDates, selectedDate],
+  );
+
+  const navigateTo = (value: string, direction: PageTurnDirection) => {
+    if (value === selectedDate || !isValidDateString(value)) {
+      return;
+    }
+    setTurnDirection(direction);
+    setSelectedDate(value);
+  };
+
   const changeDate = (value: string) => {
-    if (isValidDateString(value)) {
-      setSelectedDate(value);
+    if (isValidDateString(value) && value !== selectedDate) {
+      navigateTo(value, value > selectedDate ? 'next' : 'prev');
     }
   };
 
@@ -89,19 +116,47 @@ export default function App() {
             entries={entries}
             selectedDate={selectedDate}
             today={currentDay}
-            onSelect={setSelectedDate}
+            onSelect={changeDate}
           />
         </aside>
 
         <section className="editor-pane">
-          <EntryEditor
+          <nav className="page-nav" aria-label="翻页">
+            <button
+              type="button"
+              className="button button--ghost button--small page-nav-button"
+              aria-label="上一页"
+              disabled={!prevDate}
+              onClick={() => prevDate && navigateTo(prevDate, 'prev')}
+            >
+              ← 上一页
+            </button>
+            <button
+              type="button"
+              className="button button--ghost button--small page-nav-button"
+              aria-label="下一页"
+              disabled={!nextDate}
+              onClick={() => nextDate && navigateTo(nextDate, 'next')}
+            >
+              下一页 →
+            </button>
+          </nav>
+
+          <PageTurn
             key={selectedDate}
-            date={selectedDate}
-            entry={selectedEntry}
-            today={currentDay}
-            onSave={saveSelected}
-            onDelete={deleteSelected}
-          />
+            direction={turnDirection}
+            pageKey={selectedDate}
+          >
+            <NotebookPage
+              date={selectedDate}
+              entry={selectedEntry}
+              today={currentDay}
+              pageNumber={pageNumber}
+              pageCount={pageCount}
+              onSave={saveSelected}
+              onDelete={deleteSelected}
+            />
+          </PageTurn>
         </section>
       </main>
 
