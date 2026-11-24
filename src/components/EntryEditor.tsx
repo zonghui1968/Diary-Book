@@ -74,23 +74,20 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
   return (
     <article className="editor" onKeyDown={handleSaveShortcut}>
       <header className="editor-head">
-        <div>
-          <p className="editor-date">
-            {formatChineseDate(date)} · {weekdayLabel(date)}
-            {relative && <span className="editor-relative">{relative}</span>}
-            {selectedMood && (
-              <span
-                className="editor-mood"
-                role="img"
-                aria-label={`心情：${selectedMood.label}`}
-                title={`心情：${selectedMood.label}`}
-              >
-                {selectedMood.emoji}
-              </span>
-            )}
-          </p>
-          <h2>{entry ? '编辑这一天' : '写下这一天'}</h2>
-        </div>
+        <p className="editor-date">
+          {formatChineseDate(date)} · {weekdayLabel(date)}
+          {relative && <span className="editor-relative">{relative}</span>}
+          {selectedMood && (
+            <span
+              className="editor-mood"
+              role="img"
+              aria-label={`心情：${selectedMood.label}`}
+              title={`心情：${selectedMood.label}`}
+            >
+              {selectedMood.emoji}
+            </span>
+          )}
+        </p>
         <div className="editor-actions">
           {entry && (
             <button type="button" className="button button--ghost" onClick={onDelete}>
@@ -112,7 +109,6 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
         className="editor-title"
         value={draft.title}
         maxLength={MAX_TITLE_LENGTH}
-        placeholder="给今天起个标题…"
         aria-label="日记标题"
         onChange={(event) => changeDraft({ title: event.target.value })}
       />

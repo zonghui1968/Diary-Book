@@ -550,7 +550,7 @@ textarea {
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  min-height: 64px;
+  min-height: 32px;
   padding-right: 96px;
 }
 
@@ -577,14 +577,6 @@ textarea {
   vertical-align: -1px;
 }
 
-.editor-head h2 {
-  margin: 0;
-  font-size: clamp(22px, 2.4vw, 28px);
-  line-height: 32px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-}
-
 .editor-actions {
   display: flex;
   gap: 8px;
@@ -609,11 +601,6 @@ textarea {
   font-weight: 600;
   letter-spacing: 0.03em;
   outline: none;
-}
-
-.editor-title::placeholder {
-  color: #c9bfae;
-  font-weight: 400;
 }
 
 .editor-title:focus {
