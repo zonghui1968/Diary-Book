@@ -12,13 +12,19 @@ describe('resolvePageTheme', () => {
     expect(resolvePageTheme('wind', 'sad').pattern).toBe('wind');
   });
 
-  it('五种天气都映射到同名图案与插图', () => {
-    const weathers: WeatherId[] = ['sunny', 'cloudy', 'rain', 'snow', 'wind'];
-    for (const weather of weathers) {
+  it('七种天气都映射到同名图案、插图与中文标签', () => {
+    const expected: [WeatherId, string][] = [
+      ['sunny', '晴'],
+      ['cloudy', '阴'],
+      ['rain', '小雨'],
+      ['snow', '小雪'],
+      ['wind', '微风'],
+      ['fog', '雾'],
+      ['storm', '雷雨'],
+    ];
+    for (const [weather, label] of expected) {
       const theme = resolvePageTheme(weather);
-      expect(theme.pattern).toBe(weather);
-      expect(theme.illustration).toBe(weather);
-      expect(theme.label.length).toBeGreaterThan(0);
+      expect(theme).toEqual({ pattern: weather, label, illustration: weather });
     }
   });
 

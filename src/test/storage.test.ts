@@ -166,6 +166,32 @@ describe('storage', () => {
     ]);
   });
 
+  it('合法 temperature / wind 原样读回，非法值被剥离但日记保留', () => {
+    const storage = createMemoryStorage();
+    const withClimate = {
+      ...ENTRY,
+      id: 'climate-ok',
+      date: '2026-11-18',
+      temperature: 'cold',
+      wind: 'strong',
+    };
+    const badClimate = {
+      ...ENTRY,
+      id: 'climate-bad',
+      date: '2026-11-17',
+      temperature: 'freezing',
+      wind: 'gale',
+    };
+    storage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ version: 1, entries: [withClimate, badClimate] }),
+    );
+    expect(loadEntries(storage)).toEqual([
+      withClimate,
+      { ...ENTRY, id: 'climate-bad', date: '2026-11-17' },
+    ]);
+  });
+
   it('写入失败时返回 false 而不是抛错', () => {
     const storage: Storage = {
       length: 0,
@@ -362,5 +388,43 @@ describe('upsertEntry', () => {
       now,
     );
     expect(invalid).not.toHaveProperty('weather');
+  });
+
+  it('新建与更新都持久化气温与风力，省略保留旧值，null 与非法值清除', () => {
+    const now = '2026-11-20T02:00:00.000Z';
+    const [created] = upsertEntry(
+      [],
+      ENTRY.date,
+      { title: '冷风天', content: '风很大', temperature: 'cold', wind: 'strong' },
+      now,
+    );
+    expect(created).toMatchObject({ temperature: 'cold', wind: 'strong' });
+
+    const [kept] = upsertEntry(
+      [created],
+      ENTRY.date,
+      { title: '改', content: '改' },
+      now,
+    );
+    expect(kept).toMatchObject({ temperature: 'cold', wind: 'strong' });
+
+    const [cleared] = upsertEntry(
+      [created],
+      ENTRY.date,
+      { title: '改', content: '改', temperature: null, wind: null },
+      now,
+    );
+    expect(cleared).not.toHaveProperty('temperature');
+    expect(cleared).not.toHaveProperty('wind');
+
+    const invalidDraft = {
+      title: '改',
+      content: '改',
+      temperature: 'freezing',
+      wind: 'gale',
+    } as unknown as EntryDraft;
+    const [invalid] = upsertEntry([created], ENTRY.date, invalidDraft, now);
+    expect(invalid).not.toHaveProperty('temperature');
+    expect(invalid).not.toHaveProperty('wind');
   });
 });

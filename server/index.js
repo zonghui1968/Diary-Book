@@ -16,7 +16,17 @@ const DB_CONFIG = {
 
 const MOODS = new Set(['happy', 'calm', 'loved', 'sad', 'anxious', 'angry', 'tired']);
 const FONTS = new Set(['kai', 'xing', 'cao']);
-const WEATHERS = new Set(['sunny', 'cloudy', 'rain', 'snow', 'wind']);
+const WEATHERS = new Set([
+  'sunny',
+  'cloudy',
+  'rain',
+  'snow',
+  'wind',
+  'fog',
+  'storm',
+]);
+const TEMPERATURES = new Set(['cold', 'cool', 'mild', 'warm', 'hot']);
+const WINDS = new Set(['none', 'breeze', 'strong']);
 const MAX_ATTACHMENTS = 10;
 const TITLE_LIMIT = 160;
 
@@ -29,6 +39,8 @@ CREATE TABLE IF NOT EXISTS diary_entries (
   mood VARCHAR(24) NULL,
   font VARCHAR(24) NULL,
   weather VARCHAR(24) NULL,
+  temperature VARCHAR(24) NULL,
+  wind VARCHAR(24) NULL,
   attachments JSON NULL,
   created_at VARCHAR(40) NOT NULL,
   updated_at VARCHAR(40) NOT NULL,
@@ -38,17 +50,37 @@ CREATE TABLE IF NOT EXISTS diary_entries (
 
 const UPSERT = `
 INSERT INTO diary_entries
-  (id, entry_date, title, content, mood, font, weather, attachments, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  (id, entry_date, title, content, mood, font, weather, temperature, wind, attachments, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON DUPLICATE KEY UPDATE
   title = VALUES(title),
   content = VALUES(content),
   mood = VALUES(mood),
   font = VALUES(font),
   weather = VALUES(weather),
+  temperature = VALUES(temperature),
+  wind = VALUES(wind),
   attachments = VALUES(attachments),
   updated_at = VALUES(updated_at)
 `;
+
+/** 旧库补列：CREATE TABLE IF NOT EXISTS 不会给已存在的表加字段 */
+const EXTRA_COLUMNS = [
+  ['temperature', 'VARCHAR(24) NULL'],
+  ['wind', 'VARCHAR(24) NULL'],
+];
+
+async function ensureExtraColumns(pool) {
+  for (const [name, definition] of EXTRA_COLUMNS) {
+    try {
+      await pool.query(`ALTER TABLE diary_entries ADD COLUMN ${name} ${definition}`);
+    } catch (error) {
+      if (error.code !== 'ER_DUP_FIELDNAME') {
+        throw error;
+      }
+    }
+  }
+}
 
 function isValidDateString(value) {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -93,6 +125,16 @@ function validateEntryBody(date, body) {
   if (body.weather !== undefined && body.weather !== null && !WEATHERS.has(body.weather)) {
     return 'weather 不合法';
   }
+  if (
+    body.temperature !== undefined &&
+    body.temperature !== null &&
+    !TEMPERATURES.has(body.temperature)
+  ) {
+    return 'temperature 不合法';
+  }
+  if (body.wind !== undefined && body.wind !== null && !WINDS.has(body.wind)) {
+    return 'wind 不合法';
+  }
   if (body.attachments !== undefined && body.attachments !== null) {
     if (!Array.isArray(body.attachments)) {
       return 'attachments 必须是数组';
@@ -123,6 +165,12 @@ function rowToEntry(row) {
   if (row.weather) {
     entry.weather = row.weather;
   }
+  if (row.temperature) {
+    entry.temperature = row.temperature;
+  }
+  if (row.wind) {
+    entry.wind = row.wind;
+  }
   if (row.attachments !== null && row.attachments !== undefined) {
     entry.attachments =
       typeof row.attachments === 'string' ? JSON.parse(row.attachments) : row.attachments;
@@ -135,6 +183,7 @@ async function main() {
   try {
     pool = mysql.createPool(DB_CONFIG);
     await pool.query(CREATE_TABLE);
+    await ensureExtraColumns(pool);
     await pool.query('SELECT 1');
   } catch (error) {
     console.error(
@@ -161,7 +210,7 @@ async function main() {
   app.get('/api/entries', async (_req, res) => {
     try {
       const [rows] = await pool.query(
-        'SELECT id, entry_date, title, content, mood, font, weather, attachments, created_at, updated_at FROM diary_entries ORDER BY entry_date ASC',
+        'SELECT id, entry_date, title, content, mood, font, weather, temperature, wind, attachments, created_at, updated_at FROM diary_entries ORDER BY entry_date ASC',
       );
       res.json({ entries: rows.map(rowToEntry) });
     } catch (error) {
@@ -186,6 +235,8 @@ async function main() {
         body.mood ?? null,
         body.font ?? null,
         body.weather ?? null,
+        body.temperature ?? null,
+        body.wind ?? null,
         Array.isArray(body.attachments) ? JSON.stringify(body.attachments) : null,
         body.createdAt,
         body.updatedAt,

@@ -1,5 +1,11 @@
 import { sanitizeAttachments } from './attachments';
-import { isFontId, isMoodId, isWeatherId } from './constants';
+import {
+  isFontId,
+  isMoodId,
+  isTemperatureId,
+  isWeatherId,
+  isWindLevelId,
+} from './constants';
 import type { DiaryEntry, EntryDraft } from './types';
 
 /** 生成实体 id；优先用 crypto.randomUUID，降级为时间戳 + 随机串 */
@@ -21,6 +27,8 @@ export function normalizeDraft(draft: EntryDraft): EntryDraft {
     font: isFontId(draft.font) ? draft.font : undefined,
     mood: isMoodId(draft.mood) ? draft.mood : undefined,
     weather: isWeatherId(draft.weather) ? draft.weather : undefined,
+    temperature: isTemperatureId(draft.temperature) ? draft.temperature : undefined,
+    wind: isWindLevelId(draft.wind) ? draft.wind : undefined,
     attachments: sanitizeAttachments(draft.attachments),
   };
 }
@@ -72,6 +80,20 @@ export function upsertEntry(
           delete next.weather;
         }
       }
+      if ('temperature' in draft) {
+        if (normalized.temperature) {
+          next.temperature = normalized.temperature;
+        } else {
+          delete next.temperature;
+        }
+      }
+      if ('wind' in draft) {
+        if (normalized.wind) {
+          next.wind = normalized.wind;
+        } else {
+          delete next.wind;
+        }
+      }
       return next;
     });
   }
@@ -93,6 +115,12 @@ export function upsertEntry(
   }
   if (normalized.weather) {
     created.weather = normalized.weather;
+  }
+  if (normalized.temperature) {
+    created.temperature = normalized.temperature;
+  }
+  if (normalized.wind) {
+    created.wind = normalized.wind;
   }
   return [created, ...entries];
 }

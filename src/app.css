@@ -406,7 +406,11 @@ textarea {
 }
 
 .notebook-page {
+  --page-paper: var(--paper);
   --rule-color: rgba(198, 177, 145, 0.55);
+  --page-illustration: #b99a5c;
+  --page-tint: transparent;
+  --pattern-opacity: 0.09;
   --margin-left: 56px;
   position: relative;
   flex: 1;
@@ -418,18 +422,101 @@ textarea {
     calc(var(--margin-left) + clamp(20px, 3vw, 34px));
   border: 1px solid rgba(214, 201, 178, 0.85);
   border-radius: 14px 18px 16px 14px;
-  background-color: var(--paper);
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0 31px,
-    var(--rule-color) 31px 32px
-  );
+  background-color: var(--page-paper);
+  background-image:
+    linear-gradient(var(--page-tint), var(--page-tint)),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 31px,
+      var(--rule-color) 31px 32px
+    );
   background-attachment: local;
   background-position: 0 -7px;
   box-shadow:
     0 18px 44px rgba(84, 66, 42, 0.16),
     0 1px 0 rgba(255, 255, 255, 0.65) inset;
   overflow: hidden;
+}
+
+/* 天气主题：纸底色、横线色、插图色一一对应；心情兜底复用同一套图案 */
+.notebook-page[data-theme='sunny'] {
+  --page-paper: #fffbf1;
+  --rule-color: rgba(203, 168, 112, 0.55);
+  --page-illustration: #c9a253;
+}
+
+.notebook-page[data-theme='cloudy'] {
+  --page-paper: #f2f5f8;
+  --rule-color: rgba(140, 162, 182, 0.5);
+  --page-illustration: #8b9aa7;
+}
+
+.notebook-page[data-theme='rain'] {
+  --page-paper: #e9eff4;
+  --rule-color: rgba(118, 145, 168, 0.5);
+  --page-illustration: #6f8ba3;
+}
+
+.notebook-page[data-theme='snow'] {
+  --page-paper: #f8fbfd;
+  --rule-color: rgba(158, 184, 204, 0.45);
+  --page-illustration: #8fb0c6;
+}
+
+.notebook-page[data-theme='wind'] {
+  --page-paper: #f1f7f4;
+  --rule-color: rgba(133, 170, 152, 0.5);
+  --page-illustration: #7ba18d;
+}
+
+.notebook-page[data-theme='fog'] {
+  --page-paper: #f4f4f1;
+  --rule-color: rgba(158, 156, 146, 0.42);
+  --page-illustration: #a3a199;
+}
+
+.notebook-page[data-theme='storm'] {
+  --page-paper: #e4eaf0;
+  --rule-color: rgba(108, 131, 152, 0.5);
+  --page-illustration: #657f95;
+}
+
+/* 气温只给纸面加一层极淡的冷暖色，不影响正文对比度 */
+.notebook-page[data-temperature='cold'] {
+  --page-tint: rgba(176, 204, 226, 0.18);
+}
+
+.notebook-page[data-temperature='cool'] {
+  --page-tint: rgba(190, 214, 228, 0.1);
+}
+
+.notebook-page[data-temperature='warm'] {
+  --page-tint: rgba(233, 188, 126, 0.12);
+}
+
+.notebook-page[data-temperature='hot'] {
+  --page-tint: rgba(230, 158, 104, 0.16);
+}
+
+/* 风力影响底纹浓度；大风时风纹更密 */
+.notebook-page[data-wind='none'] {
+  --pattern-opacity: 0.055;
+}
+
+.notebook-page[data-wind='breeze'] {
+  --pattern-opacity: 0.09;
+}
+
+.notebook-page[data-wind='strong'] {
+  --pattern-opacity: 0.13;
+}
+
+.notebook-page[data-wind='strong'][data-theme='wind'] .page-pattern {
+  background-size: 82px 58px;
+}
+
+.notebook-page[data-wind='strong'][data-theme='storm'] .page-pattern {
+  background-size: 72px 72px;
 }
 
 .page-margin {
@@ -463,7 +550,7 @@ textarea {
   position: absolute;
   inset: 0;
   z-index: 0;
-  opacity: 0.09;
+  opacity: var(--pattern-opacity, 0.09);
   background-repeat: repeat;
   pointer-events: none;
 }
@@ -497,6 +584,30 @@ textarea {
   background-size: 120px 84px;
 }
 
+/* 雾：灰白晕染，只用极淡的径向渐变 */
+.page-pattern--fog {
+  background-image:
+    radial-gradient(
+      ellipse 62px 26px at 30% 28%,
+      rgba(150, 150, 142, 0.42) 0%,
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 74px 30px at 76% 68%,
+      rgba(163, 162, 154, 0.36) 0%,
+      transparent 74%
+    );
+  background-size:
+    150px 124px,
+    190px 156px;
+}
+
+/* 雷雨：更深的蓝灰 + 稀疏闪电斜纹 */
+.page-pattern--storm {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cg fill='none' stroke='%236b8299' stroke-width='1.2' stroke-linecap='round'%3E%3Cpath d='M10 22l10-14M48 30l10-14M80 18l8-12M22 62l10-14M58 74l10-14M14 90l8-12M84 58l8-12'/%3E%3Cpath d='M54 32l-8 16h9l-6 18' opacity='.85'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 96px 96px;
+}
+
 .page-illustration {
   position: absolute;
   top: 20px;
@@ -505,6 +616,7 @@ textarea {
   width: 84px;
   height: 84px;
   opacity: 0.55;
+  color: var(--page-illustration);
   pointer-events: none;
 }
 
@@ -512,26 +624,6 @@ textarea {
   display: block;
   width: 100%;
   height: 100%;
-}
-
-.page-illustration--sunny {
-  color: #c2a05e;
-}
-
-.page-illustration--cloudy {
-  color: #a8a193;
-}
-
-.page-illustration--rain {
-  color: #819db3;
-}
-
-.page-illustration--snow {
-  color: #9bb2c2;
-}
-
-.page-illustration--wind {
-  color: #98a785;
 }
 
 .editor {
@@ -629,7 +721,7 @@ textarea {
   margin: 2px 0 6px;
   padding: 4px 0;
   min-height: 32px;
-  background: var(--paper);
+  background: var(--page-paper, var(--paper));
 }
 
 .editor-hint {
@@ -800,6 +892,52 @@ textarea {
   outline-offset: 1px;
 }
 
+/* 气温 / 风力：按下态按钮组，紧凑地排在天气下拉之后 */
+.climate-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-soft);
+}
+
+.climate-button {
+  min-width: 26px;
+  height: 22px;
+  padding: 0 7px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.climate-button:hover {
+  color: var(--ink-soft);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.climate-button[aria-pressed='true'] {
+  background: var(--accent);
+  color: #fff8ec;
+  box-shadow: 0 2px 6px rgba(143, 63, 30, 0.22);
+}
+
+.climate-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .editor-content {
   flex: 1;
   width: 100%;
@@ -807,12 +945,14 @@ textarea {
   margin-top: 0;
   padding: 0 10px 8px 0;
   border: none;
-  background-color: var(--paper);
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0 31px,
-    var(--rule-color, rgba(198, 177, 145, 0.55)) 31px 32px
-  );
+  background-color: var(--page-paper, var(--paper));
+  background-image:
+    linear-gradient(var(--page-tint, transparent), var(--page-tint, transparent)),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 31px,
+      var(--rule-color, rgba(198, 177, 145, 0.55)) 31px 32px
+    );
   background-attachment: local;
   background-position: 0 -7px;
   resize: vertical;
@@ -836,7 +976,7 @@ textarea {
   gap: 12px;
   padding: 14px 0 2px;
   border-top: 1px solid var(--line);
-  background: var(--paper);
+  background: var(--page-paper, var(--paper));
   font-family: var(--font-ui);
   font-size: 11.5px;
   color: var(--muted);
@@ -861,7 +1001,7 @@ textarea {
   margin-top: 18px;
   padding-top: 16px;
   border-top: 1px dashed var(--line-strong);
-  background: var(--paper);
+  background: var(--page-paper, var(--paper));
 }
 
 .attachment-tools {

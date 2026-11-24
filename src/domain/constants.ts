@@ -1,4 +1,10 @@
-import type { FontId, MoodId, WeatherId } from './types';
+import type {
+  FontId,
+  MoodId,
+  TemperatureId,
+  WeatherId,
+  WindLevelId,
+} from './types';
 
 export const APP_NAME = '拾光日记';
 export const APP_TAGLINE = '把今天留下来';
@@ -98,6 +104,8 @@ export const WEATHER_OPTIONS: WeatherOption[] = [
   { id: 'rain', label: '雨', emoji: '🌧️' },
   { id: 'snow', label: '雪', emoji: '❄️' },
   { id: 'wind', label: '风', emoji: '🍃' },
+  { id: 'fog', label: '雾', emoji: '🌫️' },
+  { id: 'storm', label: '雷雨', emoji: '⛈️' },
 ];
 
 export const WEATHER_BY_ID = Object.fromEntries(
@@ -107,4 +115,46 @@ export const WEATHER_BY_ID = Object.fromEntries(
 /** 运行时校验：外部数据里的 weather 是否合法 */
 export function isWeatherId(value: unknown): value is WeatherId {
   return typeof value === 'string' && Object.hasOwn(WEATHER_BY_ID, value);
+}
+
+export interface TemperatureOption {
+  id: TemperatureId;
+  label: string;
+}
+
+/** 编辑器可选的气温，顺序即按钮顺序 */
+export const TEMPERATURE_OPTIONS: readonly TemperatureOption[] = [
+  { id: 'cold', label: '冷' },
+  { id: 'cool', label: '凉' },
+  { id: 'mild', label: '舒适' },
+  { id: 'warm', label: '暖' },
+  { id: 'hot', label: '热' },
+];
+
+/** 运行时校验：外部数据里的 temperature 是否合法 */
+export function isTemperatureId(value: unknown): value is TemperatureId {
+  return (
+    value === 'cold' ||
+    value === 'cool' ||
+    value === 'mild' ||
+    value === 'warm' ||
+    value === 'hot'
+  );
+}
+
+export interface WindLevelOption {
+  id: WindLevelId;
+  label: string;
+}
+
+/** 编辑器可选的风力，顺序即按钮顺序 */
+export const WIND_LEVEL_OPTIONS: readonly WindLevelOption[] = [
+  { id: 'none', label: '无风' },
+  { id: 'breeze', label: '微风' },
+  { id: 'strong', label: '大风' },
+];
+
+/** 运行时校验：外部数据里的 wind 是否合法 */
+export function isWindLevelId(value: unknown): value is WindLevelId {
+  return value === 'none' || value === 'breeze' || value === 'strong';
 }
