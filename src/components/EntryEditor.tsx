@@ -91,21 +91,6 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
           </p>
           <h2>{entry ? '编辑这一天' : '写下这一天'}</h2>
         </div>
-        <div className="editor-actions">
-          {entry && (
-            <button type="button" className="button button--ghost" onClick={onDelete}>
-              删除
-            </button>
-          )}
-          <button
-            type="button"
-            className="button button--primary"
-            onClick={save}
-            disabled={isEmpty || !isDirty}
-          >
-            保存
-          </button>
-        </div>
       </header>
 
       <input
@@ -149,10 +134,31 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
       />
 
       <footer className="editor-footer">
-        <span>{draft.content.length} 字</span>
-        <span className={saved && !isDirty ? 'save-state is-saved' : 'save-state'}>
-          {saved && !isDirty ? '已保存' : isDirty ? '有未保存的修改' : ''}
-        </span>
+        <div className="editor-meta">
+          <span>{draft.content.length} 字</span>
+          <span className={saved && !isDirty ? 'save-state is-saved' : 'save-state'}>
+            {saved && !isDirty ? '已保存' : isDirty ? '有未保存的修改' : ''}
+          </span>
+        </div>
+        <div
+          className="editor-actions editor-actions--footer"
+          role="group"
+          aria-label="日记操作"
+        >
+          <button
+            type="button"
+            className="button button--primary"
+            onClick={save}
+            disabled={isEmpty || !isDirty}
+          >
+            保存
+          </button>
+          {entry && (
+            <button type="button" className="button button--ghost" onClick={onDelete}>
+              删除
+            </button>
+          )}
+        </div>
       </footer>
     </article>
   );
