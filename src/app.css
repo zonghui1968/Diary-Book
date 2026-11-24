@@ -856,6 +856,7 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   padding: 14px 0 2px;
   border-top: 1px solid var(--line);
@@ -863,6 +864,25 @@ textarea {
   font-family: var(--font-ui);
   font-size: 11.5px;
   color: var(--muted);
+}
+
+.editor-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.editor-actions--footer {
+  margin-left: auto;
+  padding-top: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.editor-actions--footer .button--ghost {
+  order: -1;
 }
 
 .save-state {
@@ -1240,6 +1260,16 @@ textarea {
   .editor-head {
     min-height: 0;
     padding-right: 58px;
+  }
+
+  .editor-actions--footer {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+
+  .editor-actions--footer .button--ghost {
+    order: 1;
   }
 
   .page-nav {
