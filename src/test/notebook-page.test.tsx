@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import App from '../App';
@@ -105,5 +105,65 @@ describe('NotebookPage', () => {
 
     expect(document.querySelector('.page-pattern--rain')).not.toBeNull();
     expect(document.querySelector('.page-illustration--rain')).not.toBeNull();
+  });
+
+  it('四种基础底纹随草稿即时切换，不必先保存', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openBook(user);
+
+    const weathers = ['sunny', 'cloudy', 'snow', 'rain'];
+    for (const weather of weathers) {
+      await user.selectOptions(screen.getByLabelText('当天天气'), weather);
+      expect(document.querySelector(`.page-pattern--${weather}`)).not.toBeNull();
+      expect(document.querySelector(`.page-illustration--${weather}`)).not.toBeNull();
+      expect(document.querySelector('.notebook-page')).toHaveAttribute(
+        'data-theme',
+        weather,
+      );
+    }
+    expect(readStoredEntries()).toHaveLength(0);
+  });
+
+  it('气温/风力按钮即时换纸，保存后写入 localStorage，再点取消可清除', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openBook(user);
+
+    const page = document.querySelector('.notebook-page');
+    await user.selectOptions(screen.getByLabelText('当天天气'), 'fog');
+    expect(document.querySelector('.page-pattern--fog')).not.toBeNull();
+
+    const temperatureGroup = screen.getByRole('group', { name: '气温' });
+    const cold = within(temperatureGroup).getByRole('button', { name: '气温：冷' });
+    await user.click(cold);
+    expect(cold).toHaveAttribute('aria-pressed', 'true');
+    expect(page).toHaveAttribute('data-temperature', 'cold');
+
+    const windGroup = screen.getByRole('group', { name: '风力' });
+    const strong = within(windGroup).getByRole('button', { name: '风力：大风' });
+    await user.click(strong);
+    expect(strong).toHaveAttribute('aria-pressed', 'true');
+    expect(within(windGroup).getByRole('button', { name: '风力：微风' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(page).toHaveAttribute('data-wind', 'strong');
+    expect(readStoredEntries()).toHaveLength(0);
+
+    await user.type(screen.getByLabelText('日记正文'), '雾里起了大风。');
+    await user.click(screen.getByRole('button', { name: '保存' }));
+    expect(readStoredEntries()[0]).toMatchObject({
+      content: '雾里起了大风。',
+      weather: 'fog',
+      temperature: 'cold',
+      wind: 'strong',
+    });
+
+    await user.click(cold);
+    expect(cold).toHaveAttribute('aria-pressed', 'false');
+    expect(page).not.toHaveAttribute('data-temperature');
+    await user.click(screen.getByRole('button', { name: '保存' }));
+    expect(readStoredEntries()[0]).not.toHaveProperty('temperature');
   });
 });

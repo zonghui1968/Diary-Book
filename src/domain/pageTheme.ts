@@ -1,7 +1,15 @@
 import type { MoodId, WeatherId } from './types';
 
 /** 页面底纹/插图主题；plain 表示素页 */
-export type PagePattern = 'sunny' | 'cloudy' | 'rain' | 'snow' | 'wind' | 'plain';
+export type PagePattern =
+  | 'sunny'
+  | 'cloudy'
+  | 'rain'
+  | 'snow'
+  | 'wind'
+  | 'fog'
+  | 'storm'
+  | 'plain';
 
 export interface PageTheme {
   pattern: PagePattern;
@@ -16,6 +24,8 @@ const WEATHER_THEMES: Record<WeatherId, PageTheme> = {
   rain: { pattern: 'rain', label: '小雨', illustration: 'rain' },
   snow: { pattern: 'snow', label: '小雪', illustration: 'snow' },
   wind: { pattern: 'wind', label: '微风', illustration: 'wind' },
+  fog: { pattern: 'fog', label: '雾', illustration: 'fog' },
+  storm: { pattern: 'storm', label: '雷雨', illustration: 'storm' },
 };
 
 /** 没记录天气时用心情兜底 */
@@ -35,6 +45,8 @@ const PATTERN_LABELS: Record<PagePattern, string> = {
   rain: '小雨',
   snow: '小雪',
   wind: '微风',
+  fog: '雾',
+  storm: '雷雨',
   plain: '素页',
 };
 

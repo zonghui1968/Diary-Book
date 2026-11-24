@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS diary_entries (
   mood VARCHAR(24) NULL,
   font VARCHAR(24) NULL,
   weather VARCHAR(24) NULL,
+  temperature VARCHAR(24) NULL,
+  wind VARCHAR(24) NULL,
   attachments JSON NULL,
   created_at VARCHAR(40) NOT NULL,
   updated_at VARCHAR(40) NOT NULL,

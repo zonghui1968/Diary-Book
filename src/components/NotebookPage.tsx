@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { resolvePageTheme, type PagePattern } from '../domain/pageTheme';
-import type { DiaryEntry, EntryDraft } from '../domain/types';
+import type { DiaryEntry, EntryDraft, EntryMetaSelection } from '../domain/types';
 import { EntryEditor } from './EntryEditor';
 
 interface NotebookPageProps {
@@ -56,6 +57,20 @@ function PageIllustration({ theme, label }: { theme: PagePattern; label: string 
             <path d="M22 72h20" opacity=".5" />
           </g>
         )}
+        {theme === 'fog' && (
+          <g strokeWidth="2">
+            <circle cx="68" cy="26" r="8" opacity=".45" />
+            <path d="M18 38h60M26 52h52M14 66h46" opacity=".85" />
+            <path d="M34 78h28" opacity=".55" />
+          </g>
+        )}
+        {theme === 'storm' && (
+          <g strokeWidth="2">
+            <path d="M34 40c-8 0-14-5-14-12s6-12 14-12c2-8 9-13 17-13 10 0 17 7 19 15 8 0 13 5 13 11s-6 11-13 11z" />
+            <path d="M50 45l-8 15h9l-6 17" opacity=".9" />
+            <path d="M28 58l-3 8M72 56l-3 8" opacity=".55" />
+          </g>
+        )}
       </svg>
     </div>
   );
@@ -63,6 +78,7 @@ function PageIllustration({ theme, label }: { theme: PagePattern; label: string 
 
 /**
  * 单页日记纸：装订线、天气底纹、右上角插图，内部仍是 EntryEditor。
+ * 主题跟随草稿：选中天气/气温/风力后立即换肤，不必先保存。
  * 页码只通过 data 属性透传，不渲染任何页码文本。
  */
 export function NotebookPage({
@@ -74,11 +90,21 @@ export function NotebookPage({
   onSave,
   onDelete,
 }: NotebookPageProps) {
-  const theme = resolvePageTheme(entry?.weather, entry?.mood);
+  const [draftMeta, setDraftMeta] = useState<EntryMetaSelection | null>(null);
+  const meta: EntryMetaSelection = draftMeta ?? {
+    weather: entry?.weather,
+    mood: entry?.mood,
+    temperature: entry?.temperature,
+    wind: entry?.wind,
+  };
+  const theme = resolvePageTheme(meta.weather, meta.mood);
 
   return (
     <section
       className="notebook-page"
+      data-theme={theme.pattern}
+      data-temperature={meta.temperature}
+      data-wind={meta.wind}
       data-page-number={pageNumber}
       data-page-count={pageCount}
     >
@@ -91,6 +117,7 @@ export function NotebookPage({
         today={today}
         onSave={onSave}
         onDelete={onDelete}
+        onMetaChange={setDraftMeta}
       />
     </section>
   );

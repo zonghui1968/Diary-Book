@@ -1,5 +1,12 @@
 import { sanitizeAttachments } from './attachments';
-import { isFontId, isMoodId, isWeatherId, STORAGE_KEY } from './constants';
+import {
+  isFontId,
+  isMoodId,
+  isTemperatureId,
+  isWeatherId,
+  isWindLevelId,
+  STORAGE_KEY,
+} from './constants';
 import { isValidDateString } from './date';
 import { sortEntries } from './factory';
 import type { DiaryEntry } from './types';
@@ -14,6 +21,8 @@ interface StoredEntryFields {
   font?: unknown;
   mood?: unknown;
   weather?: unknown;
+  temperature?: unknown;
+  wind?: unknown;
   attachments?: unknown;
 }
 
@@ -57,6 +66,12 @@ function readEntry(value: unknown): DiaryEntry | null {
   }
   if (isWeatherId(value.weather)) {
     entry.weather = value.weather;
+  }
+  if (isTemperatureId(value.temperature)) {
+    entry.temperature = value.temperature;
+  }
+  if (isWindLevelId(value.wind)) {
+    entry.wind = value.wind;
   }
   if (isFontId(value.font)) {
     entry.font = value.font;
