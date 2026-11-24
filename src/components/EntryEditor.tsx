@@ -7,11 +7,19 @@ import {
 } from '../domain/constants';
 import { FontPicker } from './FontPicker';
 import { formatChineseDate, relativeDayLabel, weekdayLabel } from '../domain/date';
-import type { Attachment, DiaryEntry, EntryDraft } from '../domain/types';
+import type {
+  Attachment,
+  DiaryEntry,
+  EntryDraft,
+  EntryMetaSelection,
+} from '../domain/types';
 import { AttachmentPanel } from './AttachmentPanel';
+import { ClimatePicker } from './ClimatePicker';
 import { MoodPicker } from './MoodPicker';
+import { WeatherPicker } from './WeatherPicker';
 
 const EMPTY_ATTACHMENTS: Attachment[] = [];
+const META_KEYS = ['weather', 'mood', 'temperature', 'wind'] as const;
 
 interface EntryEditorProps {
   date: string;
@@ -19,14 +27,26 @@ interface EntryEditorProps {
   today: string;
   onSave: (draft: EntryDraft) => void;
   onDelete: () => void;
+  /** 天气/气温/风力等未保存也会触发，供书写区即时换肤 */
+  onMetaChange?: (meta: EntryMetaSelection) => void;
 }
 
-export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEditorProps) {
+export function EntryEditor({
+  date,
+  entry,
+  today,
+  onSave,
+  onDelete,
+  onMetaChange,
+}: EntryEditorProps) {
   const [draft, setDraft] = useState<EntryDraft>(() => ({
     title: entry?.title ?? '',
     content: entry?.content ?? '',
     font: entry?.font,
     mood: entry?.mood,
+    weather: entry?.weather,
+    temperature: entry?.temperature,
+    wind: entry?.wind,
     attachments: entry?.attachments ?? EMPTY_ATTACHMENTS,
   }));
   const [saved, setSaved] = useState(false);
@@ -39,6 +59,9 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
     draft.content !== savedContent ||
     (draft.font ?? undefined) !== entry?.font ||
     (draft.mood ?? undefined) !== entry?.mood ||
+    (draft.weather ?? undefined) !== entry?.weather ||
+    (draft.temperature ?? undefined) !== entry?.temperature ||
+    (draft.wind ?? undefined) !== entry?.wind ||
     draft.attachments !== savedAttachmentsRef.current;
   const isEmpty =
     draft.title.trim().length === 0 &&
@@ -48,8 +71,17 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
   const selectedMood = draft.mood ? MOOD_BY_ID[draft.mood] : undefined;
 
   const changeDraft = (patch: Partial<EntryDraft>) => {
-    setDraft((current) => ({ ...current, ...patch }));
+    const next = { ...draft, ...patch };
+    setDraft(next);
     setSaved(false);
+    if (onMetaChange && META_KEYS.some((key) => key in patch)) {
+      onMetaChange({
+        weather: next.weather ?? undefined,
+        mood: next.mood ?? undefined,
+        temperature: next.temperature ?? undefined,
+        wind: next.wind ?? undefined,
+      });
+    }
   };
 
   const save = () => {
@@ -71,7 +103,7 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
   return (
     <article className="editor" onKeyDown={handleSaveShortcut}>
       <header className="editor-head">
-        <div>
+<div>
           <p className="editor-date">
             {formatChineseDate(date)} · {weekdayLabel(date)}
             {relative && <span className="editor-relative">{relative}</span>}
@@ -86,22 +118,6 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
               </span>
             )}
           </p>
-          <h2>{entry ? '编辑这一天' : '写下这一天'}</h2>
-        </div>
-        <div className="editor-actions">
-          {entry && (
-            <button type="button" className="button button--ghost" onClick={onDelete}>
-              删除
-            </button>
-          )}
-          <button
-            type="button"
-            className="button button--primary"
-            onClick={save}
-            disabled={isEmpty || !isDirty}
-          >
-            保存
-          </button>
         </div>
       </header>
 
@@ -109,7 +125,6 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
         className="editor-title"
         value={draft.title}
         maxLength={MAX_TITLE_LENGTH}
-        placeholder="给今天起个标题…"
         aria-label="日记标题"
         onChange={(event) => changeDraft({ title: event.target.value })}
       />
@@ -124,18 +139,25 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
           value={draft.mood ?? undefined}
           onChange={(mood) => changeDraft({ mood })}
         />
+        <WeatherPicker
+          value={draft.weather ?? undefined}
+          onChange={(weather) => changeDraft({ weather })}
+        />
+        <ClimatePicker
+          temperature={draft.temperature ?? undefined}
+          wind={draft.wind ?? undefined}
+          onTemperatureChange={(temperature) => changeDraft({ temperature })}
+          onWindChange={(wind) => changeDraft({ wind })}
+        />
       </div>
 
       <textarea
-        className="editor-content"
+        className="editor-content editor-content--ruled"
         value={draft.content}
         maxLength={MAX_CONTENT_LENGTH}
         placeholder="今天发生了什么？此刻在想什么？"
         aria-label="日记正文"
-        style={{
-          fontFamily: fontFamilyOf(draft.font ?? undefined),
-          ...(draft.font === 'cao' ? { lineHeight: 2.4 } : {}),
-        }}
+        style={{ fontFamily: fontFamilyOf(draft.font ?? undefined) }}
         onChange={(event) => changeDraft({ content: event.target.value })}
       />
 
@@ -145,10 +167,31 @@ export function EntryEditor({ date, entry, today, onSave, onDelete }: EntryEdito
       />
 
       <footer className="editor-footer">
-        <span>{draft.content.length} 字</span>
-        <span className={saved && !isDirty ? 'save-state is-saved' : 'save-state'}>
-          {saved && !isDirty ? '已保存' : isDirty ? '有未保存的修改' : ''}
-        </span>
+        <div className="editor-meta">
+          <span>{draft.content.length} 字</span>
+          <span className={saved && !isDirty ? 'save-state is-saved' : 'save-state'}>
+            {saved && !isDirty ? '已保存' : isDirty ? '有未保存的修改' : ''}
+          </span>
+        </div>
+        <div
+          className="editor-actions editor-actions--footer"
+          role="group"
+          aria-label="日记操作"
+        >
+          <button
+            type="button"
+            className="button button--primary"
+            onClick={save}
+            disabled={isEmpty || !isDirty}
+          >
+            保存
+          </button>
+          {entry && (
+            <button type="button" className="button button--ghost" onClick={onDelete}>
+              删除
+            </button>
+          )}
+        </div>
       </footer>
     </article>
   );

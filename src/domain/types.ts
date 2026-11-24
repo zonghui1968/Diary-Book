@@ -16,6 +16,22 @@ export type MoodId =
 /** 正文字体：楷书 / 行书 / 草书 */
 export type FontId = 'kai' | 'xing' | 'cao';
 
+/** 当天天气：晴 / 阴 / 雨 / 雪 / 风 / 雾 / 雷雨 */
+export type WeatherId =
+  | 'sunny'
+  | 'cloudy'
+  | 'rain'
+  | 'snow'
+  | 'wind'
+  | 'fog'
+  | 'storm';
+
+/** 气温：冷 / 凉 / 舒适 / 暖 / 热 */
+export type TemperatureId = 'cold' | 'cool' | 'mild' | 'warm' | 'hot';
+
+/** 风力：无风 / 微风 / 大风 */
+export type WindLevelId = 'none' | 'breeze' | 'strong';
+
 /** 本地图片附件，dataUrl 为 data:image/… 形式 */
 export interface ImageAttachment {
   id: string;
@@ -59,6 +75,12 @@ export interface DiaryEntry {
   font?: FontId;
   /** 心情，早期数据没有该字段 */
   mood?: MoodId;
+  /** 天气，早期数据没有该字段 */
+  weather?: WeatherId;
+  /** 气温，早期数据没有该字段 */
+  temperature?: TemperatureId;
+  /** 风力，早期数据没有该字段 */
+  wind?: WindLevelId;
   /** 附件，早期数据没有该字段 */
   attachments?: Attachment[];
   /** ISO 8601 时间戳 */
@@ -75,7 +97,21 @@ export interface EntryDraft {
   font?: FontId | null;
   /** null 表示明确清除心情；undefined 表示未提及 */
   mood?: MoodId | null;
+  /** null 表示明确清除天气；undefined 表示未提及 */
+  weather?: WeatherId | null;
+  /** null 表示明确清除气温；undefined 表示未提及 */
+  temperature?: TemperatureId | null;
+  /** null 表示明确清除风力；undefined 表示未提及 */
+  wind?: WindLevelId | null;
   attachments?: Attachment[];
+}
+
+/** 书写区即时换肤所需的草稿元信息（未保存也生效） */
+export interface EntryMetaSelection {
+  weather?: WeatherId;
+  mood?: MoodId;
+  temperature?: TemperatureId;
+  wind?: WindLevelId;
 }
 
 /** localStorage 信封，version 用于以后迁移 */
